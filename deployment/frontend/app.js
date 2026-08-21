@@ -111,8 +111,8 @@ function App() {
                 <div className="brand-container">
                     <div className="brand-logo">A</div>
                     <div>
-                        <span className="brand-title">Alture AI</span>
-                        <span className="brand-badge">PROD v2.0</span>
+                        <span className="brand-title">Alture</span>
+                        <span className="brand-badge">RESEARCH & SAAS</span>
                     </div>
                 </div>
 
@@ -122,7 +122,7 @@ function App() {
                             className={`nav-tab ${activeTab === 'analyzer' ? 'active' : ''}`}
                             onClick={() => setActiveTab('analyzer')}
                         >
-                            ATS Match Analyzer
+                            Compatibility Analyzer
                         </button>
                         <button 
                             className={`nav-tab ${activeTab === 'global_jobs' ? 'active' : ''}`}
@@ -133,12 +133,12 @@ function App() {
                                 }
                             }}
                         >
-                            Global Job Discovery
+                            Global Opportunity Feed
                         </button>
                     </div>
 
                     <a href="/docs" target="_blank" rel="noreferrer" className="api-docs-link">
-                        <span>API Docs</span>
+                        <span>API Reference</span>
                         <span>↗</span>
                     </a>
                 </div>
@@ -149,28 +149,28 @@ function App() {
                 {/* Header */}
                 <header className="page-header">
                     <h1 className="page-title">
-                        {activeTab === 'analyzer' ? "Explainable Resume-to-Job Matching Engine" : "Multi-Source Global Job Matcher"}
+                        {activeTab === 'analyzer' ? "Candidate–Job Semantic Compatibility" : "Multi-Source Opportunity Feed"}
                     </h1>
                     <p className="page-subtitle">
                         {activeTab === 'analyzer' 
-                            ? "Evaluate candidate qualification across Sentence-BERT semantic representations, 500+ technical skill ontology overlap, and multi-task calibrated ATS scoring."
-                            : "Rank your candidate profile against live multi-board open positions sorted by compatibility score in real-time."
+                            ? "A multi-modal intelligence engine fusing dense Transformer embeddings, 500+ technical skill ontology overlap, and multi-task calibrated scoring."
+                            : "Explore and rank candidate fit across international technology openings in real time."
                         }
                     </p>
                 </header>
 
                 {/* Persona Quick Fill Bar */}
                 <div className="persona-selector">
-                    <span className="persona-label">⚡ 1-Click Candidate Profiles:</span>
+                    <span className="persona-label">✦ Curated Candidate Profiles:</span>
                     {sampleData.personas.map(p => (
                         <button key={p.id} className="persona-btn" onClick={() => handleSelectPersona(p)}>
-                            {p.name} ({p.title.split(' ')[0]} {p.title.split(' ')[1] || ''})
+                            {p.name} — {p.title.split(' ')[0]} {p.title.split(' ')[1] || ''}
                         </button>
                     ))}
                 </div>
 
                 {errorMsg && (
-                    <div style={{ padding: '12px 16px', background: 'rgba(244, 63, 94, 0.15)', border: '1px solid #f43f5e', borderRadius: '8px', color: '#fda4af', marginBottom: '1.5rem', fontSize: '0.9rem' }}>
+                    <div style={{ padding: '12px 16px', background: '#fef2f2', border: '1px solid #fecaca', borderRadius: '8px', color: '#991b1b', marginBottom: '1.5rem', fontSize: '0.9rem' }}>
                         ⚠️ {errorMsg}
                     </div>
                 )}
@@ -182,12 +182,12 @@ function App() {
                             {/* Resume Input */}
                             <div className="editor-card">
                                 <div className="editor-header">
-                                    <span className="editor-title">📄 Candidate Resume Text</span>
+                                    <span className="editor-title">Curriculum Vitae / Resume</span>
                                     <span className="editor-meta">{resumeText.split(/\s+/).filter(Boolean).length} words</span>
                                 </div>
                                 <textarea 
                                     className="editor-textarea"
-                                    placeholder="Paste full candidate resume text here..."
+                                    placeholder="Paste candidate resume text..."
                                     value={resumeText}
                                     onChange={(e) => setResumeText(e.target.value)}
                                 />
@@ -196,12 +196,12 @@ function App() {
                             {/* Job Description Input */}
                             <div className="editor-card">
                                 <div className="editor-header">
-                                    <span className="editor-title">💼 Target Job Description (JD)</span>
+                                    <span className="editor-title">Job Specification & Requirements</span>
                                     <div style={{ display: 'flex', gap: '6px' }}>
                                         {sampleData.jobs.map(j => (
                                             <button 
                                                 key={j.id} 
-                                                style={{ fontSize: '0.72rem', background: '#1e293b', color: '#94a3b8', border: '1px solid #334155', borderRadius: '4px', padding: '2px 6px', cursor: 'pointer' }}
+                                                style={{ fontSize: '0.74rem', fontWeight: '600', background: '#ffffff', color: '#57534e', border: '1px solid #d6cbba', borderRadius: '4px', padding: '3px 8px', cursor: 'pointer' }}
                                                 onClick={() => handleSelectJob(j)}
                                             >
                                                 {j.title.split(' ')[0]} {j.title.split(' ')[1]}
@@ -211,7 +211,7 @@ function App() {
                                 </div>
                                 <textarea 
                                     className="editor-textarea"
-                                    placeholder="Paste target job description and requirements here..."
+                                    placeholder="Paste target position description..."
                                     value={jdText}
                                     onChange={(e) => setJdText(e.target.value)}
                                 />
@@ -225,14 +225,14 @@ function App() {
                                 onClick={handleMatchGlobalJobs}
                                 disabled={loading}
                             >
-                                🌐 Match Against All Global Jobs
+                                Rank Across Global Feed
                             </button>
                             <button 
                                 className="primary-btn"
                                 onClick={handleAnalyze}
                                 disabled={loading}
                             >
-                                {loading ? "Analyzing NLP Signals..." : "⚡ Run ATS Compatibility Scoring"}
+                                {loading ? "Computing NLP Signals..." : "Evaluate Compatibility"}
                             </button>
                         </div>
 
@@ -241,28 +241,28 @@ function App() {
                             <section className="results-container">
                                 <div className="results-header">
                                     <div>
-                                        <h2 style={{ fontSize: '1.25rem', fontWeight: '700', color: '#f8fafc' }}>
-                                            ATS Compatibility Analysis Report
+                                        <h2 style={{ fontSize: '1.35rem', fontFamily: 'var(--font-serif)', fontWeight: '600', color: 'var(--text-heading)' }}>
+                                            Compatibility & Qualification Report
                                         </h2>
-                                        <p style={{ fontSize: '0.85rem', color: '#94a3b8' }}>
-                                            Evaluated against <strong style={{ color: '#06b6d4' }}>{jobTitle}</strong>
+                                        <p style={{ fontSize: '0.88rem', color: 'var(--text-muted)' }}>
+                                            Benchmarked against <strong style={{ color: 'var(--mustard-dark)' }}>{jobTitle}</strong>
                                         </p>
                                     </div>
                                     <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                                        <span style={{ fontSize: '0.8rem', color: '#64748b' }}>Confidence:</span>
-                                        <span style={{ fontSize: '0.85rem', fontFamily: 'monospace', color: '#f8fafc', fontWeight: 'bold' }}>
+                                        <span style={{ fontSize: '0.8rem', color: 'var(--text-muted)', fontWeight: '600', textTransform: 'uppercase' }}>Classification Confidence:</span>
+                                        <span style={{ fontSize: '0.9rem', fontFamily: 'var(--font-mono)', color: 'var(--text-heading)', fontWeight: '700' }}>
                                             {(matchResult.fit_confidence * 100).toFixed(0)}%
                                         </span>
                                     </div>
                                 </div>
 
-                                {/* Score Gauge Hero & Key Metrics */}
+                                {/* Score Hero & Key Metrics */}
                                 <div className="score-hero">
                                     <div className="gauge-box">
                                         <div className={`gauge-score ${matchResult.fit_tier === 'Good Fit' ? 'good' : matchResult.fit_tier === 'Potential Fit' ? 'potential' : 'poor'}`}>
                                             {matchResult.ats_score.toFixed(1)}%
                                         </div>
-                                        <span className="gauge-label">ATS Compatibility Score</span>
+                                        <span className="gauge-label">ATS Compatibility Index</span>
                                         <span className={`fit-badge ${matchResult.fit_tier === 'Good Fit' ? 'good' : matchResult.fit_tier === 'Potential Fit' ? 'potential' : 'poor'}`}>
                                             {matchResult.fit_tier}
                                         </span>
@@ -271,25 +271,25 @@ function App() {
                                     <div className="metrics-grid">
                                         <div className="metric-card">
                                             <div className="metric-card-title">Semantic Context Match</div>
-                                            <div className="metric-card-val" style={{ color: '#06b6d4' }}>
+                                            <div className="metric-card-val" style={{ color: '#0f766e' }}>
                                                 {(matchResult.semantic_similarity * 100).toFixed(1)}%
                                             </div>
                                         </div>
                                         <div className="metric-card">
                                             <div className="metric-card-title">Skill Recall Ratio</div>
-                                            <div className="metric-card-val" style={{ color: '#10b981' }}>
+                                            <div className="metric-card-val" style={{ color: '#15803d' }}>
                                                 {(matchResult.skill_analysis.skill_recall_score * 100).toFixed(1)}%
                                             </div>
                                         </div>
                                         <div className="metric-card">
                                             <div className="metric-card-title">Skill Jaccard Overlap</div>
-                                            <div className="metric-card-val" style={{ color: '#6366f1' }}>
+                                            <div className="metric-card-val" style={{ color: '#4338ca' }}>
                                                 {(matchResult.skill_analysis.skill_jaccard_score * 100).toFixed(1)}%
                                             </div>
                                         </div>
                                         <div className="metric-card">
                                             <div className="metric-card-title">Length Ratio</div>
-                                            <div className="metric-card-val" style={{ color: '#f59e0b' }}>
+                                            <div className="metric-card-val" style={{ color: 'var(--mustard-dark)' }}>
                                                 {matchResult.word_count_ratio}x
                                             </div>
                                         </div>
@@ -300,8 +300,8 @@ function App() {
                                 <div className="skills-section">
                                     <div className="skills-box">
                                         <div className="skills-box-header">
-                                            <span className="skills-box-title" style={{ color: '#34d399' }}>
-                                                ✅ Matched Technical Skills ({matchResult.skill_analysis.matched_skills.length})
+                                            <span className="skills-box-title" style={{ color: 'var(--match-green-text)' }}>
+                                                ✓ Matched Competencies ({matchResult.skill_analysis.matched_skills.length})
                                             </span>
                                         </div>
                                         <div className="pill-container">
@@ -317,8 +317,8 @@ function App() {
 
                                     <div className="skills-box">
                                         <div className="skills-box-header">
-                                            <span className="skills-box-title" style={{ color: '#fb7185' }}>
-                                                ⚠️ Missing Required Skills ({matchResult.skill_analysis.missing_skills.length})
+                                            <span className="skills-box-title" style={{ color: 'var(--missing-rose-text)' }}>
+                                                ✦ Missing Required Skills ({matchResult.skill_analysis.missing_skills.length})
                                             </span>
                                         </div>
                                         <div className="pill-container">
@@ -336,7 +336,7 @@ function App() {
                                 {/* Actionable Recommendations */}
                                 <div className="recommendations-box">
                                     <div className="rec-title">
-                                        💡 AI-Driven Actionable Resume Optimization Insights
+                                        Strategic Resume Optimization Guidance
                                     </div>
                                     <ul className="rec-list">
                                         {matchResult.recommendations.map((rec, idx) => (
@@ -352,20 +352,20 @@ function App() {
                 {/* TAB 2: GLOBAL JOB DISCOVERY & RANKING */}
                 {activeTab === 'global_jobs' && (
                     <div>
-                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.5rem' }}>
-                            <span style={{ fontSize: '0.95rem', color: '#94a3b8' }}>
-                                Showing {globalMatches.length} global job postings ranked by fit for candidate profile.
+                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.75rem' }}>
+                            <span style={{ fontSize: '0.98rem', color: 'var(--text-muted)' }}>
+                                Showing {globalMatches.length} openings ranked by suitability for the current candidate profile.
                             </span>
-                            <button className="primary-btn" style={{ padding: '6px 16px', fontSize: '0.85rem' }} onClick={handleMatchGlobalJobs} disabled={loading}>
-                                {loading ? "Scoring Feeds..." : "🔄 Refresh Rankings"}
+                            <button className="primary-btn" style={{ padding: '7px 18px', fontSize: '0.88rem' }} onClick={handleMatchGlobalJobs} disabled={loading}>
+                                {loading ? "Scoring..." : "Refresh Rankings"}
                             </button>
                         </div>
 
                         {globalMatches.length === 0 ? (
-                            <div style={{ textAlign: 'center', padding: '4rem 2rem', background: '#0f172a', borderRadius: '16px', border: '1px solid #1e293b' }}>
-                                <p style={{ color: '#94a3b8', marginBottom: '1rem' }}>No global jobs evaluated yet.</p>
+                            <div style={{ textAlign: 'center', padding: '4rem 2rem', background: '#ffffff', borderRadius: '16px', border: '1px solid var(--border-subtle)', boxShadow: 'var(--shadow-card)' }}>
+                                <p style={{ color: 'var(--text-muted)', marginBottom: '1.25rem', fontSize: '1.05rem' }}>No global openings evaluated yet.</p>
                                 <button className="primary-btn" onClick={handleMatchGlobalJobs} disabled={loading}>
-                                    Run Global Matching on Current Resume
+                                    Evaluate Against Global Feed
                                 </button>
                             </div>
                         ) : (
@@ -378,24 +378,24 @@ function App() {
                                                     <h3 className="job-title">{job.title}</h3>
                                                     <div className="job-company">{job.company} • {job.location}</div>
                                                 </div>
-                                                <div className={`job-score-badge ${job.fit_tier === 'Good Fit' ? 'good' : job.fit_tier === 'Potential Fit' ? 'potential' : 'poor'}`} style={{ color: job.fit_tier === 'Good Fit' ? '#10b981' : job.fit_tier === 'Potential Fit' ? '#f59e0b' : '#f43f5e' }}>
+                                                <div className="job-score-badge" style={{ color: job.fit_tier === 'Good Fit' ? '#15803d' : job.fit_tier === 'Potential Fit' ? 'var(--mustard-dark)' : '#b91c1c' }}>
                                                     {job.ats_score}%
                                                 </div>
                                             </div>
 
                                             <div className="job-details">
-                                                <span>🏷️ {job.type}</span>
+                                                <span>✦ {job.type}</span>
                                                 {job.salary_range && <span>💰 {job.salary_range}</span>}
                                             </div>
 
-                                            <div style={{ marginBottom: '1rem' }}>
-                                                <div style={{ fontSize: '0.75rem', color: '#64748b', marginBottom: '4px' }}>MATCHED SKILLS:</div>
+                                            <div style={{ marginBottom: '1.2rem' }}>
+                                                <div style={{ fontSize: '0.75rem', fontWeight: '700', textTransform: 'uppercase', color: 'var(--text-muted)', marginBottom: '6px' }}>MATCHED COMPETENCIES:</div>
                                                 <div style={{ display: 'flex', flexWrap: 'wrap', gap: '4px' }}>
                                                     {job.matched_skills_sample.map(s => (
-                                                        <span key={s} className="skill-pill matched" style={{ fontSize: '0.72rem', padding: '2px 6px' }}>{s}</span>
+                                                        <span key={s} className="skill-pill matched" style={{ fontSize: '0.74rem', padding: '2px 8px' }}>{s}</span>
                                                     ))}
                                                     {job.matched_skills_count > 4 && (
-                                                        <span style={{ fontSize: '0.72rem', color: '#94a3b8', alignSelf: 'center' }}>+{job.matched_skills_count - 4} more</span>
+                                                        <span style={{ fontSize: '0.74rem', color: 'var(--text-muted)', alignSelf: 'center' }}>+{job.matched_skills_count - 4} more</span>
                                                     )}
                                                 </div>
                                             </div>
@@ -406,7 +406,7 @@ function App() {
                                                 {job.fit_tier}
                                             </span>
                                             <button 
-                                                style={{ padding: '4px 10px', fontSize: '0.8rem', background: '#1e293b', color: '#06b6d4', border: '1px solid #334155', borderRadius: '6px', cursor: 'pointer' }}
+                                                style={{ padding: '6px 14px', fontSize: '0.84rem', fontWeight: '600', background: 'var(--bg-surface-soft)', color: 'var(--mustard-dark)', border: '1px solid var(--mustard-border)', borderRadius: '6px', cursor: 'pointer' }}
                                                 onClick={() => {
                                                     const selected = sampleData.jobs.find(j => j.id === job.job_id);
                                                     if (selected) {
@@ -415,7 +415,7 @@ function App() {
                                                     }
                                                 }}
                                             >
-                                                Deep Match ➔
+                                                Inspect ➔
                                             </button>
                                         </div>
                                     </div>
@@ -429,10 +429,10 @@ function App() {
             {/* Footer */}
             <footer className="footer">
                 <div>
-                    <strong>Alture AI</strong> — Independent AI/ML Research Challenge & Production ATS Architecture
+                    <strong>Alture</strong> — Research Architecture for Bilateral Talent Matching & ATS Optimization
                 </div>
-                <div style={{ marginTop: '4px' }}>
-                    Engineered by <strong>Ahmad Mustafa Iqbal</strong> • Built with FastAPI, Sentence-BERT & React
+                <div style={{ marginTop: '4px', color: 'var(--text-muted)' }}>
+                    Authored by <strong>Ahmad Mustafa Iqbal</strong> • Built with FastAPI, Sentence-BERT & React
                 </div>
             </footer>
         </div>
