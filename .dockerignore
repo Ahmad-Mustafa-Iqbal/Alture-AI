@@ -1,0 +1,17 @@
+__pycache__/
+*.py[cod]
+*$py.class
+.git/
+.gitignore
+venv/
+env/
+.env
+.ipynb_checkpoints/
+data/*.parquet
+data/train_parsed.csv
+data/train_preprocessed.csv
+data/val_preprocessed.csv
+data/test_preprocessed.csv
+paper/
+.DS_Store
+Thumbs.db
