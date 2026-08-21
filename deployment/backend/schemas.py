@@ -104,3 +104,16 @@ class AICoachResponse(BaseModel):
     action: str
     powered_by: str = "gemini-2.0-flash"
     data: Dict[str, Any]
+
+# ─── PDF Report Schema ───
+class ATSReportRequest(BaseModel):
+    candidate_name: str = "Candidate"
+    job_title: str = "Target Position"
+    company: str = "Company"
+    location: str = "Pakistan"
+    ats_score: float = 0.0
+    fit_tier: str = "Potential Fit"
+    matched_skills: List[str] = Field(default_factory=list)
+    missing_skills: List[str] = Field(default_factory=list)
+    tips: Optional[List[Dict[str, Any]]] = None
+    overall_assessment: Optional[str] = ""

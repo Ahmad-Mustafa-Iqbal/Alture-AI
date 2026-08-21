@@ -682,6 +682,33 @@ body {
     background-color: #f0f9ff;
 }
 
+.download-pdf-btn {
+    background: linear-gradient(135deg, #0284c7 0%, #0369a1 100%);
+    color: #ffffff;
+    font-weight: 700;
+    font-size: 0.88rem;
+    padding: 0.75rem 1.4rem;
+    border-radius: var(--radius-sm);
+    border: none;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    box-shadow: 0 2px 6px rgba(2, 132, 199, 0.25);
+    transition: all 0.2s ease;
+}
+
+.download-pdf-btn:hover:not(:disabled) {
+    background: linear-gradient(135deg, #0369a1 0%, #075985 100%);
+    transform: translateY(-1px);
+    box-shadow: 0 4px 10px rgba(2, 132, 199, 0.35);
+}
+
+.download-pdf-btn:disabled {
+    opacity: 0.7;
+    cursor: not-allowed;
+}
+
 /* ATS Compatibility Deep Card inside Inspector */
 .ats-deep-card {
     background-color: #f8fafc;

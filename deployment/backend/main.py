@@ -3,18 +3,20 @@ import uvicorn
 from fastapi import FastAPI, HTTPException, File, UploadFile
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.staticfiles import StaticFiles
-from fastapi.responses import FileResponse
+from fastapi.responses import FileResponse, Response
 
 from .schemas import (
     SingleMatchRequest, SingleMatchResponse,
     BatchMatchRequest, BatchMatchResponse,
     LiveJobSearchRequest, SampleDataResponse,
-    AICoachRequest, AICoachResponse
+    AICoachRequest, AICoachResponse,
+    ATSReportRequest
 )
 from .matcher_service import matcher_service
 from .sample_data import SAMPLE_PERSONAS, SAMPLE_JOBS
 from .resume_parser import parse_resume_file
 from .gemini_coach_service import coach_service
+from .pdf_report_service import generate_ats_audit_pdf
 
 app = FastAPI(
     title="Alture AI — Global Job Intelligence & Explainable ATS Engine",
@@ -195,6 +197,38 @@ async def ai_career_coach(request: AICoachRequest):
         raise
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"AI Coach error: {str(e)}")
+
+@app.post("/api/v1/download-ats-report", tags=["PDF Reports"])
+async def download_ats_audit_report(request: ATSReportRequest):
+    """
+    Generate and stream an enterprise-grade ATS Audit Report PDF
+    complete with score breakdown, verified skills, critical gaps, and recommendations.
+    """
+    try:
+        pdf_bytes = generate_ats_audit_pdf(
+            candidate_name=request.candidate_name or "Candidate",
+            job_title=request.job_title or "Target Position",
+            company=request.company or "Tech Company",
+            location=request.location or "Pakistan",
+            ats_score=request.ats_score,
+            fit_tier=request.fit_tier,
+            matched_skills=request.matched_skills or [],
+            missing_skills=request.missing_skills or [],
+            tips=request.tips or [],
+            overall_assessment=request.overall_assessment or ""
+        )
+        safe_name = "".join(c for c in request.candidate_name if c.isalnum() or c in (' ', '_')).rstrip().replace(' ', '_')
+        filename = f"Alture_AI_ATS_Audit_{safe_name or 'Report'}.pdf"
+
+        return Response(
+            content=pdf_bytes,
+            media_type="application/pdf",
+            headers={
+                "Content-Disposition": f'attachment; filename="{filename}"'
+            }
+        )
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Error generating PDF report: {str(e)}")
 
 # ----------------------------------------------------
 # SERVE FRONTEND STATIC FILES

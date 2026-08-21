@@ -57,6 +57,7 @@ function App() {
     const [coachLoading, setCoachLoading] = useState(false);
     const [coachTab, setCoachTab] = useState("tips"); // 'tips' | 'cover_letter' | 'interview_prep'
     const [coachError, setCoachError] = useState("");
+    const [pdfDownloading, setPdfDownloading] = useState(false);
 
     // Load initial data
     useEffect(() => {
@@ -196,6 +197,47 @@ function App() {
             setCoachError("Failed to connect to AI Coach.");
         } finally {
             setCoachLoading(false);
+        }
+    };
+
+    // Download Official ATS Audit Report PDF
+    const handleDownloadATSReport = async () => {
+        if (!selectedJob) return;
+        setPdfDownloading(true);
+        try {
+            const res = await fetch("/api/v1/download-ats-report", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({
+                    candidate_name: userName || "Candidate",
+                    job_title: selectedJob.title,
+                    company: selectedJob.company,
+                    location: selectedJob.location,
+                    ats_score: selectedJob.ats_score || 0,
+                    fit_tier: selectedJob.fit_tier || "Potential Fit",
+                    matched_skills: selectedJob.matched_skills_sample || [],
+                    missing_skills: selectedJob.missing_skills_sample || [],
+                    tips: coachData?.tips || null,
+                    overall_assessment: coachData?.overall_assessment || ""
+                })
+            });
+            if (res.ok) {
+                const blob = await res.blob();
+                const url = window.URL.createObjectURL(blob);
+                const a = document.createElement("a");
+                a.href = url;
+                a.download = `Alture_AI_ATS_Audit_${(userName || "Candidate").replace(/\\s+/g, "_")}.pdf`;
+                document.body.appendChild(a);
+                a.click();
+                window.URL.revokeObjectURL(url);
+                document.body.removeChild(a);
+            } else {
+                alert("Could not generate PDF report. Please try again.");
+            }
+        } catch (err) {
+            alert("Network error generating PDF report.");
+        } finally {
+            setPdfDownloading(false);
         }
     };
 
@@ -632,7 +674,7 @@ function App() {
                                 </div>
 
                                 {/* Action Buttons */}
-                                <div className="detail-action-row">
+                                <div className="detail-action-row" style={{ flexWrap: 'wrap' }}>
                                     <a 
                                         href={selectedJob.apply_url || "https://www.linkedin.com/jobs"} 
                                         target="_blank" 
@@ -641,6 +683,13 @@ function App() {
                                     >
                                         Apply with this Resume ↗
                                     </a>
+                                    <button 
+                                        className="download-pdf-btn" 
+                                        onClick={handleDownloadATSReport}
+                                        disabled={pdfDownloading}
+                                    >
+                                        {pdfDownloading ? "⏳ Generating PDF..." : "📄 Download ATS Audit Report (PDF)"}
+                                    </button>
                                     <button 
                                         className="save-detail-btn" 
                                         onClick={() => toggleSaveJob(selectedJob.job_id)}
