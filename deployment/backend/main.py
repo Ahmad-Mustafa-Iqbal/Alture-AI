@@ -1,6 +1,6 @@
 import os
 import uvicorn
-from fastapi import FastAPI, HTTPException
+from fastapi import FastAPI, HTTPException, File, UploadFile
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.staticfiles import StaticFiles
 from fastapi.responses import FileResponse
@@ -12,6 +12,7 @@ from .schemas import (
 )
 from .matcher_service import matcher_service
 from .sample_data import SAMPLE_PERSONAS, SAMPLE_JOBS
+from .resume_parser import parse_resume_file
 
 app = FastAPI(
     title="Alture AI — Global Job Intelligence & Explainable ATS Engine",
@@ -43,6 +44,25 @@ async def health_check():
         "sbert_loaded": matcher_service.sbert_model is not None,
         "models_loaded": matcher_service.xgb_model is not None or matcher_service.lgb_model is not None
     }
+
+@app.post("/api/v1/upload-resume", tags=["Resume Processing"])
+async def upload_resume(file: UploadFile = File(...)):
+    """
+    Upload and parse candidate resume file (.pdf, .docx, .txt).
+    Extracts text, candidate name, contact details, and word counts.
+    """
+    try:
+        contents = await file.read()
+        if len(contents) == 0:
+            raise HTTPException(status_code=400, detail="Uploaded file is empty.")
+        
+        parsed_result = parse_resume_file(filename=file.filename, file_bytes=contents)
+        if parsed_result["word_count"] < 10:
+            raise HTTPException(status_code=400, detail="Could not extract readable text from document. Please ensure file is not password-protected or scanned image.")
+            
+        return parsed_result
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Error parsing resume file: {str(e)}")
 
 @app.get("/api/v1/sample-data", response_model=SampleDataResponse, tags=["Sample Data"])
 async def get_sample_data():
