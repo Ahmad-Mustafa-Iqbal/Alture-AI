@@ -32,8 +32,8 @@ with gr.Blocks(title="Alture AI — Job Intelligence & ATS Engine") as demo:
     btn.click(fn=dummy_gpu_function, outputs=out)
     
     gr.HTML('''
-    <div style="margin-top: 15px; border-top: 2px solid #e2e8f0; padding-top: 15px;">
-        <iframe src="/app_portal" style="width: 100%; height: 85vh; border: none; border-radius: 8px;"></iframe>
+    <div style="margin-top: 15px; border-top: 2px solid #0284c7; padding-top: 15px;">
+        <iframe src="/static/index.html" style="width: 100%; height: 90vh; border: none; border-radius: 8px;"></iframe>
     </div>
     ''')
 
@@ -57,24 +57,17 @@ def custom_create_app(*args, **kwargs):
     if os.path.exists(frontend_dir):
         app.mount("/static", StaticFiles(directory=frontend_dir), name="static")
 
-        @app.get("/app_portal")
-        async def serve_app_portal():
-            index_path = os.path.join(frontend_dir, "index.html")
-            if os.path.exists(index_path):
-                return FileResponse(index_path)
-            return {"message": "Alture AI React UI"}
-
     # Include all routes from main_fastapi_app
     for route in main_fastapi_app.routes:
         if route not in app.routes:
             app.routes.append(route)
         
-    # Reorder routes: move /api, /static, /app_portal routes to the front
+    # Reorder routes: move /api and /static routes to the front
     api_routes = []
     other_routes = []
     for route in app.router.routes:
         path = getattr(route, 'path', '')
-        if path.startswith("/api") or path.startswith("/static") or path == "/app_portal":
+        if path.startswith("/api") or path.startswith("/static"):
             api_routes.append(route)
         else:
             other_routes.append(route)
