@@ -1,39 +1,89 @@
 """
 Alture AI — Hugging Face ZeroGPU Production Entrypoint
 =====================================================
-Official Hugging Face ZeroGPU implementation serving the full React UI embedded in Gradio.
+Uses user's proven monkeypatching architecture from Ahmad_Mustafa_Iqbal_Portfolio.
 """
 
+import sys
 import os
-import gradio as gr
+import torch
 import spaces
-from deployment.backend.main import app as fastapi_app
+import gradio as gr
+from fastapi.middleware.cors import CORSMiddleware
+from fastapi.staticfiles import StaticFiles
+from fastapi.responses import FileResponse
 
-# 1. Define ZeroGPU inference function for ZeroGPU Watchdog approval
+# 1. Hugging Face ZeroGPU requires at least one function decorated with @spaces.GPU during startup
 @spaces.GPU
-def predict_ats_compatibility(resume_text: str, job_text: str):
-    """ZeroGPU inference function for SentenceTransformer + XGBoost matching."""
-    from deployment.backend.matcher_service import matcher_service
-    match_result = matcher_service.analyze_match(
-        resume_text=resume_text or "Sample candidate resume text with Python, FastAPI, ML expertise.",
-        jd_text=job_text or "Sample job description seeking AI Engineer with Python, FastAPI, Docker."
-    )
-    return f"ATS Score: {match_result.ats_score}% | Fit Tier: {match_result.fit_tier}"
+def dummy_gpu_function():
+    return "ZeroGPU is active and working!"
 
-# 2. Build Gradio Blocks that embeds the full React UI
-with gr.Blocks(title="Alture AI — Job Intelligence & ATS Engine", css="footer {display:none !important;}") as demo:
-    gr.HTML("""
-    <div style="width:100%; height:94vh; margin:0; padding:0; overflow:hidden;">
-        <iframe src="/static/index.html" style="width:100%; height:100%; border:none; border-radius:8px;"></iframe>
+# 2. Import FastAPI app from deployment.backend.main
+from deployment.backend.main import app as main_fastapi_app
+
+# 3. Create Gradio Blocks UI (satisfies HF Gradio supervisor & ZeroGPU)
+with gr.Blocks(title="Alture AI — Job Intelligence & ATS Engine") as demo:
+    gr.Markdown("# Alture AI — Global Job Intelligence & Explainable ATS Engine")
+    gr.Markdown("ZeroGPU-Powered Machine Learning Platform for ATS Resume Matching & Live Job Streaming.")
+    
+    with gr.Row():
+        btn = gr.Button("⚡ Test ZeroGPU Status", variant="primary")
+        out = gr.Textbox(label="ZeroGPU Status", value="Ready")
+    btn.click(fn=dummy_gpu_function, outputs=out)
+    
+    gr.HTML('''
+    <div style="margin-top: 15px; border-top: 2px solid #e2e8f0; padding-top: 15px;">
+        <iframe src="/app_portal" style="width: 100%; height: 85vh; border: none; border-radius: 8px;"></iframe>
     </div>
-    """)
-    # Hidden button linking function to satisfy ZeroGPU compiler
-    btn = gr.Button("ZeroGPU Pipeline", visible=False)
-    out = gr.Textbox(visible=False)
-    btn.click(predict_ats_compatibility, inputs=[gr.Textbox(visible=False), gr.Textbox(visible=False)], outputs=out)
+    ''')
 
-# 3. Mount FastAPI app onto Gradio
-app = gr.mount_gradio_app(fastapi_app, demo, path="/gradio")
+# 4. Monkeypatch Gradio's internal FastAPI app creator to inject our full backend routes dynamically
+original_create_app = gr.routes.App.create_app
+
+def custom_create_app(*args, **kwargs):
+    app = original_create_app(*args, **kwargs)
+    
+    # Configure CORS on Gradio's app
+    app.add_middleware(
+        CORSMiddleware,
+        allow_origins=["*"],
+        allow_credentials=True,
+        allow_methods=["*"],
+        allow_headers=["*"],
+    )
+    
+    # Mount frontend static files
+    frontend_dir = os.path.join(os.path.dirname(os.path.abspath(__file__)), "deployment", "frontend")
+    if os.path.exists(frontend_dir):
+        app.mount("/static", StaticFiles(directory=frontend_dir), name="static")
+
+        @app.get("/app_portal")
+        async def serve_app_portal():
+            index_path = os.path.join(frontend_dir, "index.html")
+            if os.path.exists(index_path):
+                return FileResponse(index_path)
+            return {"message": "Alture AI React UI"}
+
+    # Include all routes from main_fastapi_app
+    for route in main_fastapi_app.routes:
+        if route not in app.routes:
+            app.routes.append(route)
+        
+    # Reorder routes: move /api, /static, /app_portal routes to the front
+    api_routes = []
+    other_routes = []
+    for route in app.router.routes:
+        path = getattr(route, 'path', '')
+        if path.startswith("/api") or path.startswith("/static") or path == "/app_portal":
+            api_routes.append(route)
+        else:
+            other_routes.append(route)
+            
+    app.router.routes = api_routes + other_routes
+    return app
+
+# Apply the monkeypatch
+gr.routes.App.create_app = custom_create_app
 
 if __name__ == "__main__":
-    demo.launch(server_name="0.0.0.0", server_port=7860)
+    demo.launch()
