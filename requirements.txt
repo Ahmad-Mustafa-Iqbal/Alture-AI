@@ -14,8 +14,9 @@ sentence-transformers>=2.2.0
 spacy>=3.6.0
 nltk>=3.8.0
 
-# HuggingFace Dataset Loading
+# HuggingFace Dataset Loading & Hub
 datasets>=2.14.0
+huggingface-hub<0.24.0
 
 # Machine Learning Models
 xgboost>=2.0.0
