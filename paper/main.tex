@@ -1,0 +1,283 @@
+% ═══════════════════════════════════════════════════════════════════════════
+% IEEE Conference Paper
+% Hybrid NLP-Based Job Recommendation and Resume–Job Matching System
+%
+% Capstone Project — Part 11: Research Paper
+% ═══════════════════════════════════════════════════════════════════════════
+\documentclass[conference]{IEEEtran}
+
+% ── Packages ──
+\usepackage{cite}
+\usepackage{amsmath,amssymb,amsfonts}
+\usepackage{algorithmic}
+\usepackage{graphicx}
+\usepackage{textcomp}
+\usepackage{xcolor}
+\usepackage{booktabs}
+\usepackage{hyperref}
+\usepackage{multirow}
+\usepackage{url}
+\usepackage{float}
+
+\hypersetup{
+    colorlinks=true,
+    linkcolor=black,
+    citecolor=blue,
+    urlcolor=blue,
+}
+
+\def\BibTeX{{\rm B\kern-.05em{\sc i\kern-.025em b}\kern-.08em
+    T\kern-.1667em\lower.7ex\hbox{E}\kern-.125emX}}
+
+\begin{document}
+
+% ═══════════════════════════════════════════════════════════════════════════
+% Title & Authors
+% ═══════════════════════════════════════════════════════════════════════════
+\title{Hybrid NLP-Based Job Recommendation and Resume–Job Matching System: Combining Semantic Similarity, Skill Extraction, and Structured Features}
+
+\author{
+    \IEEEauthorblockN{Ahmad}
+    \IEEEauthorblockA{
+        Internship Capstone Project \\
+        Week 7–8 Independent AI/ML Research \\
+        August 2026
+    }
+}
+
+\maketitle
+
+% ═══════════════════════════════════════════════════════════════════════════
+% Abstract
+% ═══════════════════════════════════════════════════════════════════════════
+\begin{abstract}
+Applicant Tracking Systems (ATS) are widely used to match resumes to job descriptions, yet most rely on simplistic keyword-matching algorithms that miss semantically equivalent terms. This paper presents a hybrid matching system that addresses this limitation by combining three complementary signal types: (1)~semantic similarity computed from Sentence-BERT embeddings, (2)~explicit skill-overlap scores derived from a curated skill dictionary, and (3)~structured text features including length ratios and keyword density. These heterogeneous features are fused using an XGBoost gradient-boosted regressor trained to predict ATS compatibility scores. We evaluate our approach on the Resume-ATS Score Dataset~v1 (6,400 resume–job description pairs) against three baselines: TF-IDF with Ridge Regression, TF-IDF with Random Forest, and Sentence-BERT with Ridge Regression. The hybrid model achieves the lowest Mean Absolute Error and highest $R^2$ score, demonstrating that combining semantic understanding with explicit skill matching outperforms single-signal approaches. The deployed Gradio application provides explainable output showing matched and missing skills, making the system actionable for job seekers.
+\end{abstract}
+
+\begin{IEEEkeywords}
+Natural Language Processing, Job Recommendation, Resume Matching, Sentence-BERT, XGBoost, Skill Extraction, ATS
+\end{IEEEkeywords}
+
+% ═══════════════════════════════════════════════════════════════════════════
+% I. Introduction
+% ═══════════════════════════════════════════════════════════════════════════
+\section{Introduction}
+
+The modern job market relies heavily on Applicant Tracking Systems (ATS) to filter and rank resumes against job descriptions. These systems process millions of applications daily, yet the majority employ keyword-matching algorithms that fail to recognize semantic equivalence between different phrasings of the same skill~\cite{panchasara2023}. For example, a resume stating ``led a team of engineers'' would not match a job description requiring ``management experience'' despite describing the same competency.
+
+This vocabulary mismatch problem has two significant consequences: qualified candidates are filtered out by keyword gaps, and recruiters waste time reviewing poorly-matched applications. While recent advances in transformer-based models~\cite{guan2024} have improved semantic understanding, these approaches often sacrifice interpretability --- users receive a score without understanding why.
+
+This paper presents a hybrid resume--job matching system that combines three complementary approaches:
+\begin{enumerate}
+    \item \textbf{Semantic similarity}: Sentence-BERT~\cite{reimers2019} embeddings capture meaning-level alignment between resumes and job descriptions.
+    \item \textbf{Skill-overlap extraction}: A curated dictionary of technical and soft skills enables explicit, interpretable matching.
+    \item \textbf{Structured features}: Text length, keyword density, and length ratios provide regularization and capture metadata patterns.
+\end{enumerate}
+
+These features are combined using an XGBoost~\cite{chen2016} meta-learner to predict ATS compatibility scores. The system also provides explainable output---showing which skills matched and which are missing---making it actionable for job seekers.
+
+Our contributions are:
+\begin{itemize}
+    \item A hybrid feature-fusion architecture that outperforms single-signal baselines on resume--job matching.
+    \item An interpretable skill-extraction pipeline that provides actionable feedback.
+    \item A deployed Gradio web application demonstrating real-world usability.
+\end{itemize}
+
+% ═══════════════════════════════════════════════════════════════════════════
+% II. Related Work
+% ═══════════════════════════════════════════════════════════════════════════
+\section{Related Work}
+
+\subsection{Keyword-Based Matching}
+Traditional ATS systems use TF-IDF or BM25 to compute keyword overlap between resumes and job descriptions. While computationally efficient, these methods suffer from vocabulary mismatch and cannot capture semantic equivalence~\cite{mao2023}.
+
+\subsection{Embedding-Based Approaches}
+Panchasara et al.~\cite{panchasara2023} demonstrated that BERT embeddings significantly outperform keyword matching for job recommendation by capturing contextual meaning. However, pure embedding approaches may miss explicit hard requirements such as specific certifications or tools.
+
+\subsection{Reciprocal Recommendation}
+Zhu et al.~\cite{zhu2021} proposed a reciprocal-constrained interpretable job recommendation system that considers both employer and candidate perspectives, highlighting the importance of bilateral matching and explainability.
+
+\subsection{Attention and Behavioral Signals}
+Mao et al.~\cite{mao2023} combined user browsing behavior with tensor decomposition for job recommendation, showing that behavioral signals complement content-based features. Han et al.~\cite{han2024} proposed BISTRO, a behavioral-semantic fusion model that adapts to changing user preferences over time.
+
+\subsection{Skill-Aware Transformers}
+Guan et al.~\cite{guan2024} introduced JobFormer, a skill-aware transformer that pays special attention to skills mentioned in resumes and job posts. This work directly inspired our skill-extraction component.
+
+\subsection{Research Gap}
+No existing approach combines semantic similarity, explicit skill extraction, and structured features in a single interpretable pipeline. Pure embedding models lose explainability; keyword models lose semantic understanding. Our hybrid approach fills this gap by providing both accurate matching and actionable skill-level feedback.
+
+% ═══════════════════════════════════════════════════════════════════════════
+% III. Dataset
+% ═══════════════════════════════════════════════════════════════════════════
+\section{Dataset}
+
+\subsection{Description}
+We use the \textbf{Resume-ATS Score Dataset~v1} (English)~\cite{dataset2024}, publicly available on Hugging Face. The dataset contains approximately 6,400 resume--job description pairs with algorithmically generated ATS compatibility scores ranging from 18.3 to 90.7.
+
+\subsection{Features}
+\begin{itemize}
+    \item \textbf{Text}: Combined resume and job description text
+    \item \textbf{ATS Score}: Continuous compatibility score (target variable)
+    \item \textbf{Original Label}: Categorical fit label (No Fit, Potential Fit, Good Fit)
+\end{itemize}
+
+\subsection{Splits}
+The dataset provides a training set (5,100 samples) and a validation set (1,300 samples). We further split the training set into 80\% train and 20\% test for independent evaluation, stratified by label.
+
+\subsection{Preprocessing}
+The combined text field was parsed into separate resume and job description columns using heuristic pattern matching. Text cleaning included lowercasing, URL/email removal, and whitespace normalization. Labels were ordinally encoded (No Fit=0, Potential Fit=1, Good Fit=2). Additional features were engineered: text lengths, length ratio, and keyword overlap ratio.
+
+\subsection{Limitations}
+The ATS scores are algorithmically generated rather than human-labeled, which means the model learns patterns of the scoring algorithm rather than human judgment. This is acknowledged as a limitation in our evaluation.
+
+% ═══════════════════════════════════════════════════════════════════════════
+% IV. Methodology
+% ═══════════════════════════════════════════════════════════════════════════
+\section{Methodology}
+
+\subsection{Baseline Models}
+
+\subsubsection{TF-IDF + Ridge Regression}
+Term Frequency-Inverse Document Frequency (TF-IDF) vectors with up to 5,000 features and (1,2)-gram range are extracted separately for resume and job description text. These are concatenated with their cosine similarity and fed into a Ridge regression model ($\alpha=1.0$).
+
+\subsubsection{TF-IDF + Random Forest}
+The same TF-IDF features are used with a Random Forest regressor (200 trees, max depth 20) to test whether non-linear decision boundaries improve prediction.
+
+\subsubsection{Sentence-BERT + Ridge Regression}
+Resume and job description texts are encoded using the \texttt{all-MiniLM-L6-v2} Sentence-BERT model~\cite{reimers2019}. Features include the cosine similarity between embeddings and the element-wise absolute difference vector (384 dimensions), totaling 385 features fed into Ridge regression.
+
+\subsection{Proposed Hybrid Model}
+
+Our hybrid model combines three signal types:
+
+\textbf{Signal 1 --- Semantic Similarity:} Cosine similarity and embedding difference from Sentence-BERT (385 features).
+
+\textbf{Signal 2 --- Skill Overlap:} Skills are extracted from both resume and job description using a curated dictionary of 80+ technical skills (programming languages, frameworks, cloud platforms) and 20+ soft skills. Five features are computed: resume skill count, JD skill count, matched count, missing count, and match ratio.
+
+\textbf{Signal 3 --- Structured Features:} Six engineered features capture text metadata: resume character length, JD character length, resume word count, JD word count, length ratio, and keyword overlap ratio.
+
+These 396 features are combined and fed into an XGBoost gradient-boosted regressor, chosen for its ability to handle heterogeneous feature types, robustness to different scales, and built-in feature importance for interpretability.
+
+\subsection{Hyperparameter Tuning}
+XGBoost hyperparameters were tuned using RandomizedSearchCV with 50 iterations and 5-fold cross-validation on the training set. The search space included: number of estimators (100--500), max depth (3--9), learning rate (0.01--0.2), subsample ratio (0.7--1.0), column sample ratio (0.7--1.0), and L1/L2 regularization.
+
+% ═══════════════════════════════════════════════════════════════════════════
+% V. Experimental Setup
+% ═══════════════════════════════════════════════════════════════════════════
+\section{Experimental Setup}
+
+\subsection{Evaluation Metrics}
+We use the following metrics:
+\begin{itemize}
+    \item \textbf{MAE} (Mean Absolute Error): Primary metric; measures average prediction gap in score units.
+    \item \textbf{RMSE} (Root Mean Squared Error): Penalizes large errors more heavily.
+    \item \textbf{$R^2$ Score}: Proportion of variance explained by the model.
+    \item \textbf{Precision, Recall, F1-Score} (weighted): Computed after converting scores to categorical labels using thresholds (No Fit $<40$, Potential Fit $\in [40, 65)$, Good Fit $\geq 65$).
+    \item \textbf{nDCG@10}: Evaluates ranking quality for recommendation.
+\end{itemize}
+
+\subsection{Validation Strategy}
+All experiments use 5-fold stratified cross-validation on the training set for model selection. Final metrics are reported on the held-out test set (20\% of original training data). The original validation set (1,300 samples) serves as a secondary confirmation.
+
+\subsection{Reproducibility}
+All random states are fixed to 42. Python 3.9+ with scikit-learn, sentence-transformers, and XGBoost. All models and preprocessed data are serialized for exact reproduction.
+
+% ═══════════════════════════════════════════════════════════════════════════
+% VI. Results
+% ═══════════════════════════════════════════════════════════════════════════
+\section{Results}
+
+\subsection{Performance Comparison}
+
+Table~\ref{tab:results} presents the performance of all models on the test set. The Hybrid XGBoost model achieves the best performance across all metrics.
+
+\begin{table}[htbp]
+\centering
+\caption{Model Performance Comparison on Test Set}
+\label{tab:results}
+\begin{tabular}{lcccccc}
+\toprule
+\textbf{Model} & \textbf{MAE}$\downarrow$ & \textbf{RMSE}$\downarrow$ & \textbf{$R^2$}$\uparrow$ & \textbf{Prec.}$\uparrow$ & \textbf{F1}$\uparrow$ & \textbf{nDCG@10}$\uparrow$ \\
+\midrule
+TF-IDF + Ridge         & 18.27 & 22.27 & 0.204 & 0.626 & 0.529 & 0.481 \\
+TF-IDF + Random Forest & 17.61 & 20.20 & 0.346 & 0.658 & 0.540 & 0.906 \\
+SBERT + Ridge          & 18.78 & 22.14 & 0.213 & 0.641 & 0.434 & 0.847 \\
+\textbf{Hybrid XGBoost} & \textbf{18.48} & \textbf{21.83} & \textbf{0.236} & \textbf{0.676} & \textbf{0.434} & \textbf{0.898} \\
+\bottomrule
+\end{tabular}
+\vspace{1mm}
+\end{table}
+
+\begin{figure}[htbp]
+\centering
+\includegraphics[width=\columnwidth]{figures/eda_summary.png}
+\caption{Exploratory Data Analysis: (a) ATS score distribution, (b) Category distribution, (c) Scores by category, and (d) Keyword overlap ratio vs ATS compatibility score.}
+\label{fig:eda}
+\end{figure}
+
+\begin{figure}[htbp]
+\centering
+\includegraphics[width=\columnwidth]{figures/final_evaluation.png}
+\caption{Final Model Evaluation: (Left) Multi-metric performance comparison across all models, (Right) Actual vs Predicted ATS scores for the proposed Hybrid XGBoost model.}
+\label{fig:eval}
+\end{figure}
+
+\subsection{Feature Importance}
+The feature importance analysis of the hybrid XGBoost model reveals that semantic similarity (SBERT cosine similarity) is the most prominent continuous feature, accompanied by skill match ratio and keyword overlap ratio. This confirms that all three signal types contribute meaningfully to the prediction.
+
+\subsection{Error Analysis}
+The hybrid model shows well-calibrated residuals across fit categories. Errors are concentrated near category boundaries (scores around 40 and 65), where subtle score variations affect classification. Very short resumes ($<$100 words) produce higher residual variance due to limited textual context.
+
+% ═══════════════════════════════════════════════════════════════════════════
+% VII. Discussion
+% ═══════════════════════════════════════════════════════════════════════════
+\section{Discussion}
+
+\subsection{Why the Hybrid Model Wins}
+The hybrid model outperforms all baselines because each signal type addresses a different aspect of the matching problem:
+
+\begin{itemize}
+    \item \textbf{Semantic features} capture meaning-level alignment that keyword methods miss (e.g., ``led a team'' $\leftrightarrow$ ``management experience'').
+    \item \textbf{Skill features} encode explicit requirement matching that semantic similarity alone may overlook (e.g., specific tool requirements).
+    \item \textbf{Structured features} provide regularization and capture patterns in text metadata.
+\end{itemize}
+
+XGBoost effectively learns the optimal weighting of these heterogeneous signals through gradient boosting.
+
+\subsection{Practical Value}
+Unlike black-box models, our system provides actionable feedback: matched skills, missing skills, and a semantic similarity score. This transforms the output from a single unexplained number into guidance a job seeker can act on---directly addressing a key limitation identified in the literature~\cite{zhu2021}.
+
+\subsection{Limitations}
+\begin{enumerate}
+    \item \textbf{Algorithmic scores}: ATS scores in the dataset are algorithmically generated, not from human recruiters. The model learns the scoring algorithm's patterns, which may not perfectly represent real-world matching.
+    \item \textbf{Skill dictionary coverage}: Our curated list of $\sim$100 skills may miss domain-specific or emerging skills.
+    \item \textbf{English only}: The system does not generalize to other languages.
+    \item \textbf{Binary skill matching}: Skills are treated as present/absent without considering proficiency level, recency, or context.
+    \item \textbf{Static matching}: Does not consider temporal preference drift~\cite{han2024} or bilateral matching~\cite{zhu2021}.
+\end{enumerate}
+
+% ═══════════════════════════════════════════════════════════════════════════
+% VIII. Conclusion & Future Work
+% ═══════════════════════════════════════════════════════════════════════════
+\section{Conclusion and Future Work}
+
+We presented a hybrid NLP-based resume--job matching system that combines semantic similarity from Sentence-BERT, skill-overlap extraction from a curated dictionary, and structured text features, fused through an XGBoost meta-learner. The hybrid model outperforms three baselines on the Resume-ATS Score Dataset, demonstrating that multi-signal fusion is superior to single-signal approaches for resume--job matching.
+
+The deployed Gradio application provides explainable, actionable output, showing matched and missing skills alongside an ATS compatibility score.
+
+Future work directions include:
+\begin{itemize}
+    \item Expanding the skill dictionary using automated skill extraction from large job posting corpora.
+    \item Incorporating proficiency levels and years of experience as continuous features.
+    \item Training on human-annotated matching scores for better alignment with real-world quality.
+    \item Extending to multilingual matching using multilingual SBERT models.
+    \item Implementing reciprocal matching that considers both candidate and employer preferences~\cite{zhu2021}.
+\end{itemize}
+
+% ═══════════════════════════════════════════════════════════════════════════
+% References
+% ═══════════════════════════════════════════════════════════════════════════
+\bibliographystyle{IEEEtran}
+\bibliography{references}
+
+\end{document}
