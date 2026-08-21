@@ -236,6 +236,7 @@ class AltureMatcherService:
                 location=job.location,
                 type=job.type,
                 salary_range=job.salary_range,
+                apply_url=job.apply_url,
                 ats_score=match_res.ats_score,
                 fit_tier=match_res.fit_tier,
                 matched_skills_count=len(match_res.skill_analysis.matched_skills),

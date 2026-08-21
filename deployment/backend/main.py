@@ -8,7 +8,7 @@ from fastapi.responses import FileResponse
 from .schemas import (
     SingleMatchRequest, SingleMatchResponse,
     BatchMatchRequest, BatchMatchResponse,
-    SampleDataResponse
+    LiveJobSearchRequest, SampleDataResponse
 )
 from .matcher_service import matcher_service
 from .sample_data import SAMPLE_PERSONAS, SAMPLE_JOBS
@@ -98,25 +98,35 @@ async def get_live_jobs(limit: int = 15):
     live_jobs = fetch_live_global_jobs(limit=limit)
     return {"status": "success", "count": len(live_jobs), "jobs": live_jobs}
 
-@app.post("/api/v1/match-live-jobs", response_model=BatchMatchResponse, tags=["Live Job Stream"])
-async def match_against_live_jobs(request: BatchMatchRequest, limit: int = 12):
+@app.post("/api/v1/search-and-match-jobs", response_model=BatchMatchResponse, tags=["Live Job Stream"])
+async def search_and_match_jobs(request: LiveJobSearchRequest):
     """
-    Fetch live real-world remote tech jobs and rank them in real-time against candidate resume.
+    Multi-source job search and ATS matching across Pakistan and Worldwide tech feeds.
+    Supports JSearch (LinkedIn, Indeed, Glassdoor) and Remotive.
     """
-    from .live_jobs_service import fetch_live_global_jobs
+    from .live_jobs_service import fetch_multi_source_jobs
     try:
-        live_jobs = fetch_live_global_jobs(limit=limit)
+        jobs, provider_name = fetch_multi_source_jobs(
+            query=request.query or "Software Engineer",
+            location=request.location or "Pakistan",
+            provider=request.provider or "auto",
+            user_api_key=request.rapidapi_key,
+            limit=request.limit or 15
+        )
         ranked_results = matcher_service.match_against_jobs_list(
             resume_text=request.resume_text,
-            jobs=live_jobs
+            jobs=jobs
         )
         return BatchMatchResponse(
             status="success",
             total_jobs_evaluated=len(ranked_results),
+            provider_used=provider_name,
+            search_query=request.query,
+            search_location=request.location,
             ranked_jobs=ranked_results
         )
     except Exception as e:
-        raise HTTPException(status_code=500, detail=f"Error matching against live jobs: {str(e)}")
+        raise HTTPException(status_code=500, detail=f"Error searching and matching jobs: {str(e)}")
 
 # ----------------------------------------------------
 # SERVE FRONTEND STATIC FILES

@@ -9,10 +9,16 @@ function App() {
     const [jdText, setJdText] = useState("");
     const [jobTitle, setJobTitle] = useState("Senior AI / ML Research Engineer");
     
+    // Global Multi-Source Search State
+    const [searchQuery, setSearchQuery] = useState("AI Engineer");
+    const [searchLocation, setSearchLocation] = useState("Pakistan");
+    const [rapidApiKey, setRapidApiKey] = useState("");
+    const [providerUsed, setProviderUsed] = useState("Pakistan Enterprise Tech Feed");
+    const [showKeyModal, setShowKeyModal] = useState(false);
+
     // Result State
     const [matchResult, setMatchResult] = useState(null);
     const [globalMatches, setGlobalMatches] = useState([]);
-    const [isLiveFeed, setIsLiveFeed] = useState(false);
     const [loading, setLoading] = useState(false);
     const [errorMsg, setErrorMsg] = useState("");
 
@@ -64,63 +70,41 @@ function App() {
         }
     };
 
-    // Trigger Batch Global Jobs Match (Curated)
-    const handleMatchGlobalJobs = async () => {
+    // Trigger Multi-Source Search & Match (Pakistan + Worldwide + LinkedIn/Indeed)
+    const handleSearchAndMatch = async (customQuery = null, customLoc = null) => {
         if (!resumeText.trim()) {
-            setErrorMsg("Please provide a resume to match against global job feeds.");
+            setErrorMsg("Please provide a candidate resume to match against job opportunities.");
             return;
         }
         setErrorMsg("");
         setLoading(true);
-        setIsLiveFeed(false);
+        
+        const q = customQuery !== null ? customQuery : searchQuery;
+        const loc = customLoc !== null ? customLoc : searchLocation;
+        
         try {
-            const res = await fetch("/api/v1/match-jobs", {
+            const res = await fetch("/api/v1/search-and-match-jobs", {
                 method: "POST",
                 headers: { "Content-Type": "application/json" },
                 body: JSON.stringify({
-                    resume_text: resumeText
+                    resume_text: resumeText,
+                    query: q || "Software Engineer",
+                    location: loc || "Pakistan",
+                    provider: "auto",
+                    rapidapi_key: rapidApiKey.trim() || null,
+                    limit: 15
                 })
             });
             const data = await res.json();
             if (res.ok) {
                 setGlobalMatches(data.ranked_jobs);
+                setProviderUsed(data.provider_used || "Multi-Source Engine");
                 setActiveTab("global_jobs");
             } else {
-                setErrorMsg(data.detail || "Global matching failed.");
+                setErrorMsg(data.detail || "Multi-source matching failed.");
             }
         } catch (err) {
-            setErrorMsg("Network error connecting to API.");
-        } finally {
-            setLoading(false);
-        }
-    };
-
-    // Trigger Live Real-Time Remote Jobs Scrape & Match
-    const handleMatchLiveJobs = async () => {
-        if (!resumeText.trim()) {
-            setErrorMsg("Please provide a resume to match against live job feeds.");
-            return;
-        }
-        setErrorMsg("");
-        setLoading(true);
-        setIsLiveFeed(true);
-        try {
-            const res = await fetch("/api/v1/match-live-jobs?limit=12", {
-                method: "POST",
-                headers: { "Content-Type": "application/json" },
-                body: JSON.stringify({
-                    resume_text: resumeText
-                })
-            });
-            const data = await res.json();
-            if (res.ok) {
-                setGlobalMatches(data.ranked_jobs);
-                setActiveTab("global_jobs");
-            } else {
-                setErrorMsg(data.detail || "Live matching failed.");
-            }
-        } catch (err) {
-            setErrorMsg("Network error connecting to live jobs API.");
+            setErrorMsg("Network error connecting to Job Search API.");
         } finally {
             setLoading(false);
         }
@@ -162,11 +146,11 @@ function App() {
                             onClick={() => {
                                 setActiveTab('global_jobs');
                                 if (globalMatches.length === 0 && resumeText) {
-                                    handleMatchGlobalJobs();
+                                    handleSearchAndMatch();
                                 }
                             }}
                         >
-                            Global Opportunity Feed
+                            Opportunity Search & Feed
                         </button>
                     </div>
 
@@ -182,12 +166,12 @@ function App() {
                 {/* Header */}
                 <header className="page-header">
                     <h1 className="page-title">
-                        {activeTab === 'analyzer' ? "Candidate–Job Semantic Compatibility" : "Multi-Source Opportunity Feed"}
+                        {activeTab === 'analyzer' ? "Candidate–Job Semantic Compatibility" : "Multi-Source Opportunity Search & Ranking"}
                     </h1>
                     <p className="page-subtitle">
                         {activeTab === 'analyzer' 
                             ? "A multi-modal intelligence engine fusing dense Transformer embeddings, 500+ technical skill ontology overlap, and multi-task calibrated scoring."
-                            : "Explore and rank candidate fit across international technology openings in real time."
+                            : "Search and rank opportunities across Pakistan (Lahore, Karachi, Islamabad) and Worldwide Remote tech openings in real time."
                         }
                     </p>
                 </header>
@@ -255,10 +239,10 @@ function App() {
                         <div className="action-bar">
                             <button 
                                 className="secondary-btn"
-                                onClick={handleMatchGlobalJobs}
+                                onClick={() => handleSearchAndMatch()}
                                 disabled={loading}
                             >
-                                Rank Across Global Feed
+                                Search Pakistan & Global Openings
                             </button>
                             <button 
                                 className="primary-btn"
@@ -382,41 +366,123 @@ function App() {
                     </>
                 )}
 
-                {/* TAB 2: GLOBAL JOB DISCOVERY & RANKING */}
+                {/* TAB 2: GLOBAL & PAKISTAN MULTI-SOURCE SEARCH & RANKING */}
                 {activeTab === 'global_jobs' && (
                     <div>
-                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.75rem', flexWrap: 'wrap', gap: '1rem' }}>
-                            <div>
-                                <span style={{ fontSize: '0.98rem', color: 'var(--text-muted)' }}>
-                                    Showing {globalMatches.length} openings ranked by suitability for the candidate profile.
-                                </span>
-                                {isLiveFeed && (
-                                    <span style={{ marginLeft: '10px', fontSize: '0.74rem', fontFamily: 'var(--font-mono)', padding: '2px 8px', background: '#ecfdf5', color: '#047857', border: '1px solid #a7f3d0', borderRadius: '4px', fontWeight: 'bold' }}>
-                                        ● LIVE REMOTIVE API STREAM
-                                    </span>
-                                )}
-                            </div>
-                            <div style={{ display: 'flex', gap: '8px' }}>
-                                <button className="secondary-btn" style={{ padding: '7px 16px', fontSize: '0.86rem' }} onClick={handleMatchGlobalJobs} disabled={loading}>
-                                    Curated Benchmarks
-                                </button>
-                                <button className="primary-btn" style={{ padding: '7px 18px', fontSize: '0.86rem' }} onClick={handleMatchLiveJobs} disabled={loading}>
-                                    {loading && isLiveFeed ? "Fetching Live..." : "📡 Fetch Real-Time Live Jobs"}
-                                </button>
-                            </div>
-                        </div>
+                        {/* Search Filter Bar */}
+                        <div style={{ background: '#ffffff', border: '1px solid var(--border-subtle)', borderRadius: '16px', padding: '1.5rem', marginBottom: '2rem', boxShadow: 'var(--shadow-card)' }}>
+                            <div style={{ display: 'grid', gridTemplateColumns: '1.2fr 1fr auto', gap: '1rem', alignItems: 'flex-end' }}>
+                                <div>
+                                    <label style={{ display: 'block', fontSize: '0.8rem', fontWeight: '700', textTransform: 'uppercase', color: 'var(--text-muted)', marginBottom: '6px' }}>
+                                        🎯 Target Role / Skill Keyword:
+                                    </label>
+                                    <input 
+                                        type="text"
+                                        style={{ width: '100%', padding: '10px 14px', border: '1px solid var(--border-medium)', borderRadius: '8px', fontSize: '0.92rem', outline: 'none', background: 'var(--bg-surface-soft)' }}
+                                        placeholder="e.g. AI Engineer, Python Developer, Data Scientist..."
+                                        value={searchQuery}
+                                        onChange={(e) => setSearchQuery(e.target.value)}
+                                    />
+                                </div>
 
-                        {globalMatches.length === 0 ? (
-                            <div style={{ textAlign: 'center', padding: '4rem 2rem', background: '#ffffff', borderRadius: '16px', border: '1px solid var(--border-subtle)', boxShadow: 'var(--shadow-card)' }}>
-                                <p style={{ color: 'var(--text-muted)', marginBottom: '1.25rem', fontSize: '1.05rem' }}>No global openings evaluated yet.</p>
-                                <div style={{ display: 'flex', justifyContent: 'center', gap: '1rem' }}>
-                                    <button className="primary-btn" onClick={handleMatchLiveJobs} disabled={loading}>
-                                        📡 Fetch Real-Time Live Remote Jobs
-                                    </button>
-                                    <button className="secondary-btn" onClick={handleMatchGlobalJobs} disabled={loading}>
-                                        Use Curated Global Benchmark
+                                <div>
+                                    <label style={{ display: 'block', fontSize: '0.8rem', fontWeight: '700', textTransform: 'uppercase', color: 'var(--text-muted)', marginBottom: '6px' }}>
+                                        📍 Target Location:
+                                    </label>
+                                    <input 
+                                        type="text"
+                                        style={{ width: '100%', padding: '10px 14px', border: '1px solid var(--border-medium)', borderRadius: '8px', fontSize: '0.92rem', outline: 'none', background: 'var(--bg-surface-soft)' }}
+                                        placeholder="e.g. Pakistan, Lahore, Karachi, Remote, USA..."
+                                        value={searchLocation}
+                                        onChange={(e) => setSearchLocation(e.target.value)}
+                                    />
+                                </div>
+
+                                <div style={{ display: 'flex', gap: '8px' }}>
+                                    <button 
+                                        className="primary-btn" 
+                                        style={{ padding: '10px 22px', fontSize: '0.92rem' }}
+                                        onClick={() => handleSearchAndMatch()}
+                                        disabled={loading}
+                                    >
+                                        {loading ? "Searching & Ranking..." : "🔍 Search & Match"}
                                     </button>
                                 </div>
+                            </div>
+
+                            {/* Quick Location Pills */}
+                            <div style={{ display: 'flex', gap: '8px', marginTop: '1rem', alignItems: 'center', flexWrap: 'wrap' }}>
+                                <span style={{ fontSize: '0.78rem', fontWeight: '700', color: 'var(--mustard-dark)', textTransform: 'uppercase' }}>Quick Locations:</span>
+                                {[
+                                    { label: "🇵🇰 Pakistan (All)", loc: "Pakistan" },
+                                    { label: "📍 Lahore", loc: "Lahore" },
+                                    { label: "📍 Karachi", loc: "Karachi" },
+                                    { label: "📍 Islamabad", loc: "Islamabad" },
+                                    { label: "🌍 Worldwide Remote", loc: "Remote" },
+                                    { label: "🇺🇸 United States", loc: "USA" }
+                                ].map(p => (
+                                    <button 
+                                        key={p.loc}
+                                        style={{ fontSize: '0.78rem', fontWeight: '600', padding: '4px 10px', background: searchLocation === p.loc ? 'var(--mustard-subtle)' : 'var(--bg-surface-soft)', border: searchLocation === p.loc ? '1px solid var(--mustard-border)' : '1px solid var(--border-subtle)', borderRadius: '6px', color: searchLocation === p.loc ? 'var(--mustard-dark)' : 'var(--text-body)', cursor: 'pointer' }}
+                                        onClick={() => {
+                                            setSearchLocation(p.loc);
+                                            handleSearchAndMatch(searchQuery, p.loc);
+                                        }}
+                                    >
+                                        {p.label}
+                                    </button>
+                                ))}
+
+                                <button 
+                                    style={{ marginLeft: 'auto', fontSize: '0.78rem', color: 'var(--text-muted)', background: 'transparent', border: 'none', textDecoration: 'underline', cursor: 'pointer' }}
+                                    onClick={() => setShowKeyModal(!showKeyModal)}
+                                >
+                                    ⚙️ {rapidApiKey ? "Custom RapidAPI Key Set ✓" : "Enter Free RapidAPI Key (Optional for unlimited live queries)"}
+                                </button>
+                            </div>
+
+                            {showKeyModal && (
+                                <div style={{ marginTop: '1rem', padding: '1rem', background: 'var(--bg-surface-soft)', border: '1px solid var(--mustard-border)', borderRadius: '8px' }}>
+                                    <div style={{ fontSize: '0.82rem', fontWeight: '700', color: 'var(--mustard-dark)', marginBottom: '4px' }}>
+                                        🔑 Optional RapidAPI JSearch Key for Direct LinkedIn & Indeed Aggregation:
+                                    </div>
+                                    <div style={{ display: 'flex', gap: '8px' }}>
+                                        <input 
+                                            type="password"
+                                            placeholder="Paste your RapidAPI key here..."
+                                            value={rapidApiKey}
+                                            onChange={(e) => setRapidApiKey(e.target.value)}
+                                            style={{ flex: 1, padding: '6px 10px', fontSize: '0.85rem', border: '1px solid var(--border-medium)', borderRadius: '4px' }}
+                                        />
+                                        <button 
+                                            className="secondary-btn" 
+                                            style={{ padding: '6px 14px', fontSize: '0.82rem' }}
+                                            onClick={() => setShowKeyModal(false)}
+                                        >
+                                            Save Key
+                                        </button>
+                                    </div>
+                                </div>
+                            )}
+                        </div>
+
+                        {/* Stream Provider Status */}
+                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.5rem', flexWrap: 'wrap', gap: '0.75rem' }}>
+                            <span style={{ fontSize: '0.95rem', color: 'var(--text-muted)' }}>
+                                Showing <strong>{globalMatches.length}</strong> matching positions ranked by compatibility for current candidate resume.
+                            </span>
+                            <span style={{ fontSize: '0.76rem', fontFamily: 'var(--font-mono)', padding: '3px 10px', background: 'var(--mustard-subtle)', color: 'var(--mustard-dark)', border: '1px solid var(--mustard-border)', borderRadius: '4px', fontWeight: '700' }}>
+                                📡 ACTIVE FEED: {providerUsed}
+                            </span>
+                        </div>
+
+                        {/* Jobs Grid */}
+                        {globalMatches.length === 0 ? (
+                            <div style={{ textAlign: 'center', padding: '4rem 2rem', background: '#ffffff', borderRadius: '16px', border: '1px solid var(--border-subtle)', boxShadow: 'var(--shadow-card)' }}>
+                                <p style={{ color: 'var(--text-muted)', marginBottom: '1.25rem', fontSize: '1.05rem' }}>No positions matching query currently loaded.</p>
+                                <button className="primary-btn" onClick={() => handleSearchAndMatch()} disabled={loading}>
+                                    Run Search & Rank Opportunities
+                                </button>
                             </div>
                         ) : (
                             <div className="jobs-grid">
@@ -452,17 +518,31 @@ function App() {
                                         </div>
 
                                         <div className="job-footer">
-                                            <span className={`fit-badge ${job.fit_tier === 'Good Fit' ? 'good' : job.fit_tier === 'Potential Fit' ? 'potential' : 'poor'}`} style={{ margin: 0 }}>
-                                                {job.fit_tier}
-                                            </span>
+                                            <div style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
+                                                <span className={`fit-badge ${job.fit_tier === 'Good Fit' ? 'good' : job.fit_tier === 'Potential Fit' ? 'potential' : 'poor'}`} style={{ margin: 0 }}>
+                                                    {job.fit_tier}
+                                                </span>
+                                                {job.apply_url && (
+                                                    <a 
+                                                        href={job.apply_url} 
+                                                        target="_blank" 
+                                                        rel="noreferrer" 
+                                                        style={{ fontSize: '0.78rem', fontWeight: '700', color: 'var(--mustard-dark)', textDecoration: 'none', padding: '4px 8px', background: 'var(--mustard-subtle)', borderRadius: '4px', border: '1px solid var(--mustard-border)' }}
+                                                    >
+                                                        Apply Direct ↗
+                                                    </a>
+                                                )}
+                                            </div>
                                             <button 
-                                                style={{ padding: '6px 14px', fontSize: '0.84rem', fontWeight: '600', background: 'var(--bg-surface-soft)', color: 'var(--mustard-dark)', border: '1px solid var(--mustard-border)', borderRadius: '6px', cursor: 'pointer' }}
+                                                style={{ padding: '6px 14px', fontSize: '0.84rem', fontWeight: '600', background: 'var(--bg-surface-soft)', color: 'var(--text-heading)', border: '1px solid var(--border-medium)', borderRadius: '6px', cursor: 'pointer' }}
                                                 onClick={() => {
                                                     const selected = sampleData.jobs.find(j => j.id === job.job_id);
                                                     if (selected) {
                                                         handleSelectJob(selected);
-                                                        setActiveTab('analyzer');
+                                                    } else {
+                                                        setJobTitle(job.title);
                                                     }
+                                                    setActiveTab('analyzer');
                                                 }}
                                             >
                                                 Inspect ➔

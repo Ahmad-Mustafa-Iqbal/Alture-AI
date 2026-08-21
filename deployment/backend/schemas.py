@@ -13,12 +13,21 @@ class JobPosting(BaseModel):
     location: str
     type: str  # Remote, Hybrid, On-site
     salary_range: Optional[str] = None
+    apply_url: Optional[str] = None
     jd_text: str
     required_skills: List[str] = []
 
 class BatchMatchRequest(BaseModel):
     resume_text: str = Field(..., min_length=20, description="Raw text of the candidate's resume")
     job_ids: Optional[List[str]] = Field(None, description="Optional list of specific job IDs to match against")
+
+class LiveJobSearchRequest(BaseModel):
+    resume_text: str = Field(..., min_length=20, description="Candidate resume text to match against")
+    query: Optional[str] = Field("Software Engineer", description="Job search keyword e.g. 'AI Engineer', 'Python', 'React'")
+    location: Optional[str] = Field("Pakistan", description="Location e.g. 'Pakistan', 'Lahore', 'Karachi', 'Remote', 'USA'")
+    provider: Optional[str] = Field("auto", description="'auto' | 'jsearch' | 'remotive'")
+    rapidapi_key: Optional[str] = Field(None, description="Optional user-provided RapidAPI key for unlimited live LinkedIn/Indeed queries")
+    limit: Optional[int] = Field(15, description="Number of job postings to retrieve and match")
 
 class SkillAnalysis(BaseModel):
     matched_skills: List[str]
@@ -51,7 +60,8 @@ class RankedJobMatch(BaseModel):
     company: str
     location: str
     type: str
-    salary_range: Optional[str]
+    salary_range: Optional[str] = None
+    apply_url: Optional[str] = None
     ats_score: float
     fit_tier: str
     matched_skills_count: int
@@ -62,6 +72,9 @@ class RankedJobMatch(BaseModel):
 class BatchMatchResponse(BaseModel):
     status: str = "success"
     total_jobs_evaluated: int
+    provider_used: str = "Multi-Source Engine"
+    search_query: Optional[str] = None
+    search_location: Optional[str] = None
     ranked_jobs: List[RankedJobMatch]
 
 class SamplePersona(BaseModel):
