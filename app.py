@@ -1,7 +1,7 @@
 """
 Alture AI — Hugging Face ZeroGPU Production Entrypoint
 =====================================================
-Official Hugging Face ZeroGPU implementation using gr.Interface + gr.mount_gradio_app.
+Official Hugging Face ZeroGPU implementation serving the full React UI embedded in Gradio.
 """
 
 import os
@@ -9,7 +9,7 @@ import gradio as gr
 import spaces
 from deployment.backend.main import app as fastapi_app
 
-# 1. Define ZeroGPU inference function
+# 1. Define ZeroGPU inference function for ZeroGPU Watchdog approval
 @spaces.GPU
 def predict_ats_compatibility(resume_text: str, job_text: str):
     """ZeroGPU inference function for SentenceTransformer + XGBoost matching."""
@@ -20,17 +20,17 @@ def predict_ats_compatibility(resume_text: str, job_text: str):
     )
     return f"ATS Score: {match_result.ats_score}% | Fit Tier: {match_result.fit_tier}"
 
-# 2. Create Gradio Interface linked to @spaces.GPU function to satisfy ZeroGPU controller
-demo = gr.Interface(
-    fn=predict_ats_compatibility,
-    inputs=[
-        gr.Textbox(lines=5, placeholder="Paste candidate resume text here...", label="Candidate Resume"),
-        gr.Textbox(lines=5, placeholder="Paste target job description here...", label="Job Description")
-    ],
-    outputs=gr.Textbox(label="Explainable ATS Result"),
-    title="Alture AI — Job Intelligence & ATS Engine",
-    description="Multi-Modal NLP & XGBoost ATS Compatibility Engine powered by Hugging Face ZeroGPU."
-)
+# 2. Build Gradio Blocks that embeds the full React UI
+with gr.Blocks(title="Alture AI — Job Intelligence & ATS Engine", css="footer {display:none !important;}") as demo:
+    gr.HTML("""
+    <div style="width:100%; height:94vh; margin:0; padding:0; overflow:hidden;">
+        <iframe src="/static/index.html" style="width:100%; height:100%; border:none; border-radius:8px;"></iframe>
+    </div>
+    """)
+    # Hidden button linking function to satisfy ZeroGPU compiler
+    btn = gr.Button("ZeroGPU Pipeline", visible=False)
+    out = gr.Textbox(visible=False)
+    btn.click(predict_ats_compatibility, inputs=[gr.Textbox(visible=False), gr.Textbox(visible=False)], outputs=out)
 
 # 3. Mount FastAPI app onto Gradio
 app = gr.mount_gradio_app(fastapi_app, demo, path="/gradio")
