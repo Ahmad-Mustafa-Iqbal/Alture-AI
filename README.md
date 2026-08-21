@@ -8,7 +8,7 @@ sdk_version: 4.44.0
 app_file: app.py
 pinned: false
 license: mit
-short_description: Hybrid Multi-Modal NLP Job Recommendation & ATS Matching Platform
+short_description: Hybrid NLP Job Recommendation & ATS Engine
 ---
 
 # Alture AI — Hybrid NLP-Based Job Recommendation and Resume–Job Matching System
