@@ -35,8 +35,7 @@ function App() {
     const [uploadedWordCount, setUploadedWordCount] = useState(0);
     const [isUploading, setIsUploading] = useState(false);
     const [isDragging, setIsDragging] = useState(false);
-    const [showResumeModal, setShowResumeModal] = useState(false);
-    const [modalTab, setModalTab] = useState("upload");
+    const [showTextPaste, setShowTextPaste] = useState(false);
     
     const fileInputRef = useRef(null);
 
@@ -64,6 +63,7 @@ function App() {
                     setResumeText(defaultPersona.resume_text);
                     setUserName("Ahmad Mustafa Iqbal");
                     setUserRole("AI & Machine Learning Engineer");
+                    setUploadedWordCount(defaultPersona.resume_text.split(/\s+/).filter(Boolean).length);
                     fetchJobsAndMatch(defaultPersona.resume_text, "AI Engineer", "Pakistan");
                 }
             })
@@ -125,9 +125,7 @@ function App() {
                 if (data.candidate_name && data.candidate_name !== "Candidate") {
                     setUserName(data.candidate_name);
                 }
-                setShowResumeModal(false);
-                setCurrentPage("matcher");
-                // Immediately calculate ATS matches for all jobs
+                setShowTextPaste(false);
                 fetchJobsAndMatch(data.extracted_text, searchQuery, searchLocation);
             } else {
                 setErrorMsg(data.detail || "Failed to parse uploaded resume document.");
@@ -156,13 +154,13 @@ function App() {
         setUserName(persona.name);
         setUserRole(persona.title);
         setUploadedFileName("");
-        setShowResumeModal(false);
+        setUploadedWordCount(persona.resume_text.split(/\s+/).filter(Boolean).length);
         fetchJobsAndMatch(persona.resume_text, searchQuery, searchLocation);
     };
 
     return (
         <div className="app-container">
-            {/* 1. TOP MAIN HEADER WITH CLEAN 2-PAGE NAVIGATION */}
+            {/* 1. TOP MAIN NAVBAR (CLEAN & NON-REDUNDANT) */}
             <header className="top-profile-bar">
                 <div className="profile-info">
                     <div className="brand-logo-wrapper">
@@ -188,9 +186,6 @@ function App() {
                 </div>
 
                 <div className="profile-actions">
-                    <button className="resume-trigger-btn" onClick={() => setShowResumeModal(true)}>
-                        <span>📁 {uploadedFileName ? `📄 ${uploadedFileName}` : "Upload My Resume (PDF)"}</span>
-                    </button>
                     <div className="profile-user-pill">
                         <div className="profile-avatar">
                             {userName.split(' ').map(n => n[0]).join('').substring(0, 2)}
@@ -397,24 +392,119 @@ function App() {
             -------------------------------------------------------------- */}
             {currentPage === 'matcher' && (
                 <div style={{ maxWidth: '1240px', margin: '2rem auto', padding: '0 1.5rem' }}>
-                    {/* Header Banner */}
-                    <div style={{ background: '#ffffff', border: '1px solid #e2e8f0', borderRadius: '16px', padding: '2rem', marginBottom: '2rem', boxShadow: '0 4px 14px rgba(0,0,0,0.04)', display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '1.5rem' }}>
-                        <div>
-                            <span style={{ fontSize: '0.78rem', fontWeight: '800', textTransform: 'uppercase', color: '#0284c7', letterSpacing: '0.05em' }}>
-                                🧠 Multi-Modal NLP Intelligence Engine
-                            </span>
-                            <h2 style={{ fontSize: '1.75rem', fontWeight: '800', color: '#0f172a', margin: '4px 0' }}>
-                                Resume Compatibility & ATS Screening
-                            </h2>
-                            <p style={{ color: '#64748b', fontSize: '0.92rem' }}>
-                                Candidate: <strong style={{ color: '#0f172a' }}>{userName}</strong> • Document: <strong style={{ color: '#0284c7' }}>{uploadedFileName || "Active Profile Resume"}</strong> ({resumeText.split(/\s+/).filter(Boolean).length} words)
-                            </p>
+                    {/* Embedded Single Resume Upload & Personas Section */}
+                    <div style={{ background: '#ffffff', border: '1px solid #e2e8f0', borderRadius: '16px', padding: '1.75rem', marginBottom: '2rem', boxShadow: '0 4px 14px rgba(0,0,0,0.04)' }}>
+                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.25rem', flexWrap: 'wrap', gap: '0.5rem' }}>
+                            <div>
+                                <span style={{ fontSize: '0.78rem', fontWeight: '800', textTransform: 'uppercase', color: '#0284c7', letterSpacing: '0.05em' }}>
+                                    🧠 Multi-Modal NLP Intelligence Engine
+                                </span>
+                                <h2 style={{ fontSize: '1.5rem', fontWeight: '800', color: '#0f172a', margin: '2px 0' }}>
+                                    Resume Compatibility & ATS Screening
+                                </h2>
+                            </div>
+
+                            <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                                <button 
+                                    style={{ padding: '6px 12px', fontSize: '0.8rem', fontWeight: '700', background: '#f8fafc', border: '1px solid #cbd5e1', borderRadius: '6px', cursor: 'pointer', color: '#475569' }}
+                                    onClick={() => setShowTextPaste(!showTextPaste)}
+                                >
+                                    {showTextPaste ? "Hide Text Editor" : "✍️ Paste Resume Text"}
+                                </button>
+                            </div>
                         </div>
 
-                        <div style={{ display: 'flex', gap: '10px' }}>
-                            <button className="primary-btn" style={{ padding: '10px 20px', fontSize: '0.9rem' }} onClick={() => setShowResumeModal(true)}>
-                                📁 Upload / Change Resume (PDF)
+                        {/* Drag & Drop File Upload Box */}
+                        <input 
+                            type="file" 
+                            ref={fileInputRef}
+                            style={{ display: 'none' }}
+                            accept=".pdf,.docx,.doc,.txt"
+                            onChange={(e) => {
+                                if (e.target.files && e.target.files[0]) {
+                                    handleFileUpload(e.target.files[0]);
+                                }
+                            }}
+                        />
+
+                        <div 
+                            className={`upload-dropzone ${isDragging ? 'dragging' : ''}`}
+                            style={{ padding: '1.25rem', marginBottom: '1rem', border: '2px dashed #94a3b8', background: '#f8fafc' }}
+                            onClick={() => fileInputRef.current && fileInputRef.current.click()}
+                            onDragOver={(e) => { e.preventDefault(); setIsDragging(true); }}
+                            onDragLeave={() => setIsDragging(false)}
+                            onDrop={(e) => {
+                                e.preventDefault();
+                                setIsDragging(false);
+                                if (e.dataTransfer.files && e.dataTransfer.files[0]) {
+                                    handleFileUpload(e.dataTransfer.files[0]);
+                                }
+                            }}
+                        >
+                            <div className="upload-icon-circle" style={{ width: '40px', height: '40px', fontSize: '1.2rem', marginBottom: '2px' }}>
+                                {isUploading ? "⏳" : "📁"}
+                            </div>
+                            <div className="upload-prompt-text" style={{ fontSize: '0.92rem' }}>
+                                {isUploading ? "Parsing & Extracting Text from Resume..." : "Drop your Resume here (PDF, DOCX, TXT) or Click to Browse"}
+                            </div>
+                            <div className="upload-prompt-sub" style={{ fontSize: '0.78rem' }}>
+                                Automatically calculates ATS Compatibility scores across all live jobs
+                            </div>
+                        </div>
+
+                        {/* Active Resume Status Banner */}
+                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '10px 14px', background: '#ecfdf5', border: '1px solid #a7f3d0', borderRadius: '8px', marginBottom: '1rem', flexWrap: 'wrap', gap: '6px' }}>
+                            <span style={{ fontSize: '0.85rem', color: '#065f46', fontWeight: '600' }}>
+                                ✓ Active Candidate: <strong>{userName}</strong> • Document: <strong>{uploadedFileName || "Default Candidate Profile"}</strong> ({uploadedWordCount} words parsed)
+                            </span>
+                            <button 
+                                style={{ padding: '4px 10px', fontSize: '0.76rem', fontWeight: '700', background: '#047857', color: '#ffffff', border: 'none', borderRadius: '4px', cursor: 'pointer' }}
+                                onClick={() => fileInputRef.current && fileInputRef.current.click()}
+                            >
+                                ↻ Upload Different Resume
                             </button>
+                        </div>
+
+                        {/* Raw Text Paste Drawer */}
+                        {showTextPaste && (
+                            <div style={{ marginBottom: '1rem', padding: '1rem', background: '#f8fafc', border: '1px solid #cbd5e1', borderRadius: '8px' }}>
+                                <label style={{ display: 'block', fontSize: '0.8rem', fontWeight: '700', textTransform: 'uppercase', color: '#64748b', marginBottom: '6px' }}>
+                                    Paste Plain Resume Text:
+                                </label>
+                                <textarea 
+                                    style={{ width: '100%', height: '140px', padding: '10px', border: '1px solid #cbd5e1', borderRadius: '6px', fontFamily: 'monospace', fontSize: '0.82rem', outline: 'none' }}
+                                    value={resumeText}
+                                    onChange={(e) => setResumeText(e.target.value)}
+                                    placeholder="Paste raw CV text..."
+                                />
+                                <button 
+                                    className="search-submit-btn" 
+                                    style={{ marginTop: '8px', padding: '6px 14px', fontSize: '0.82rem' }}
+                                    onClick={() => {
+                                        setUploadedWordCount(resumeText.split(/\s+/).filter(Boolean).length);
+                                        setShowTextPaste(false);
+                                        fetchJobsAndMatch(resumeText, searchQuery, searchLocation);
+                                    }}
+                                >
+                                    Re-Analyze Matched Jobs
+                                </button>
+                            </div>
+                        )}
+
+                        {/* Sample Candidate Personas Row */}
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '8px', flexWrap: 'wrap', paddingTop: '0.25rem' }}>
+                            <span style={{ fontSize: '0.78rem', fontWeight: '800', textTransform: 'uppercase', color: '#64748b' }}>
+                                ⚡ Or Test with Sample Profiles:
+                            </span>
+                            {sampleData.personas.map(p => (
+                                <button 
+                                    key={p.id}
+                                    style={{ padding: '4px 10px', fontSize: '0.78rem', fontWeight: '600', background: userName === p.name ? '#e0f2fe' : '#f1f5f9', border: userName === p.name ? '1px solid #0284c7' : '1px solid #cbd5e1', borderRadius: '6px', color: userName === p.name ? '#0369a1' : '#334155', cursor: 'pointer' }}
+                                    onClick={() => handleSelectPersona(p)}
+                                >
+                                    👤 {p.name} ({p.title.split(' ')[0]} {p.title.split(' ')[1] || ''})
+                                </button>
+                            ))}
                         </div>
                     </div>
 
@@ -551,148 +641,6 @@ function App() {
                                 <p style={{ color: '#94a3b8' }}>Select a job from the list to view full ATS score analysis.</p>
                             </div>
                         )}
-                    </div>
-                </div>
-            )}
-
-            {/* -------------------------------------------------------------
-               RESUME UPLOAD MODAL (PDF / DOCX / TEXT)
-            -------------------------------------------------------------- */}
-            {showResumeModal && (
-                <div className="modal-backdrop" onClick={() => setShowResumeModal(false)}>
-                    <div className="modal-content" onClick={(e) => e.stopPropagation()}>
-                        <div className="modal-header">
-                            <h2 className="modal-title">Upload or Edit Candidate CV</h2>
-                            <button className="close-btn" onClick={() => setShowResumeModal(false)}>✕</button>
-                        </div>
-
-                        {/* Tabs */}
-                        <div style={{ display: 'flex', gap: '8px', marginBottom: '1.25rem', borderBottom: '1px solid #e2e8f0', paddingBottom: '0.75rem' }}>
-                            <button 
-                                style={{ padding: '6px 14px', fontSize: '0.85rem', fontWeight: '700', background: modalTab === 'upload' ? '#0284c7' : '#f1f5f9', color: modalTab === 'upload' ? '#ffffff' : '#475569', border: 'none', borderRadius: '6px', cursor: 'pointer' }}
-                                onClick={() => setModalTab('upload')}
-                            >
-                                📁 Upload Document (PDF / DOCX)
-                            </button>
-                            <button 
-                                style={{ padding: '6px 14px', fontSize: '0.85rem', fontWeight: '700', background: modalTab === 'paste' ? '#0284c7' : '#f1f5f9', color: modalTab === 'paste' ? '#ffffff' : '#475569', border: 'none', borderRadius: '6px', cursor: 'pointer' }}
-                                onClick={() => setModalTab('paste')}
-                            >
-                                ✍️ Paste Resume Text
-                            </button>
-                            <button 
-                                style={{ padding: '6px 14px', fontSize: '0.85rem', fontWeight: '700', background: modalTab === 'personas' ? '#0284c7' : '#f1f5f9', color: modalTab === 'personas' ? '#ffffff' : '#475569', border: 'none', borderRadius: '6px', cursor: 'pointer' }}
-                                onClick={() => setModalTab('personas')}
-                            >
-                                ⚡ Sample Personas
-                            </button>
-                        </div>
-
-                        {/* TAB A: FILE DROPZONE */}
-                        {modalTab === 'upload' && (
-                            <div>
-                                <input 
-                                    type="file" 
-                                    ref={fileInputRef}
-                                    style={{ display: 'none' }}
-                                    accept=".pdf,.docx,.doc,.txt"
-                                    onChange={(e) => {
-                                        if (e.target.files && e.target.files[0]) {
-                                            handleFileUpload(e.target.files[0]);
-                                        }
-                                    }}
-                                />
-
-                                <div 
-                                    className={`upload-dropzone ${isDragging ? 'dragging' : ''}`}
-                                    onClick={() => fileInputRef.current && fileInputRef.current.click()}
-                                    onDragOver={(e) => { e.preventDefault(); setIsDragging(true); }}
-                                    onDragLeave={() => setIsDragging(false)}
-                                    onDrop={(e) => {
-                                        e.preventDefault();
-                                        setIsDragging(false);
-                                        if (e.dataTransfer.files && e.dataTransfer.files[0]) {
-                                            handleFileUpload(e.dataTransfer.files[0]);
-                                        }
-                                    }}
-                                >
-                                    <div className="upload-icon-circle">
-                                        {isUploading ? "⏳" : "📁"}
-                                    </div>
-                                    <div className="upload-prompt-text">
-                                        {isUploading ? "Parsing & Extracting Text from Resume..." : "Click to browse or drop your resume here"}
-                                    </div>
-                                    <div className="upload-prompt-sub">
-                                        Supports PDF, Word (.DOCX), and Plain Text (.TXT)
-                                    </div>
-                                </div>
-
-                                {uploadedFileName && (
-                                    <div className="upload-success-banner">
-                                        <span>✓ Currently Active Document: <strong>{uploadedFileName}</strong> ({uploadedWordCount} words parsed)</span>
-                                    </div>
-                                )}
-                            </div>
-                        )}
-
-                        {/* TAB B: TEXT EDITOR */}
-                        {modalTab === 'paste' && (
-                            <div style={{ marginBottom: '1.25rem' }}>
-                                <label style={{ display: 'block', fontSize: '0.8rem', fontWeight: '700', textTransform: 'uppercase', color: '#64748b', marginBottom: '6px' }}>
-                                    📄 Paste Full Candidate Resume Text:
-                                </label>
-                                <textarea 
-                                    style={{ width: '100%', height: '240px', padding: '1rem', border: '1px solid #cbd5e1', borderRadius: '8px', fontFamily: 'monospace', fontSize: '0.85rem', outline: 'none' }}
-                                    value={resumeText}
-                                    onChange={(e) => setResumeText(e.target.value)}
-                                    placeholder="Paste entire CV/Resume text here..."
-                                />
-                            </div>
-                        )}
-
-                        {/* TAB C: PRELOADED PERSONAS */}
-                        {modalTab === 'personas' && (
-                            <div style={{ marginBottom: '1.25rem' }}>
-                                <label style={{ display: 'block', fontSize: '0.8rem', fontWeight: '700', textTransform: 'uppercase', color: '#64748b', marginBottom: '6px' }}>
-                                    ⚡ 1-Click Candidate Profiles:
-                                </label>
-                                <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
-                                    {sampleData.personas.map(p => (
-                                        <div 
-                                            key={p.id}
-                                            style={{ padding: '10px 14px', background: '#f8fafc', border: '1px solid #cbd5e1', borderRadius: '8px', cursor: 'pointer', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}
-                                            onClick={() => handleSelectPersona(p)}
-                                        >
-                                            <div>
-                                                <div style={{ fontWeight: '700', fontSize: '0.92rem' }}>{p.name}</div>
-                                                <div style={{ fontSize: '0.8rem', color: '#64748b' }}>{p.title}</div>
-                                            </div>
-                                            <button style={{ padding: '4px 10px', fontSize: '0.78rem', background: '#0284c7', color: '#ffffff', border: 'none', borderRadius: '4px', cursor: 'pointer' }}>
-                                                Select ➔
-                                            </button>
-                                        </div>
-                                    ))}
-                                </div>
-                            </div>
-                        )}
-
-                        <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '8px', marginTop: '1rem' }}>
-                            <button 
-                                style={{ padding: '8px 16px', background: '#ffffff', border: '1px solid #cbd5e1', borderRadius: '6px', fontWeight: '600', cursor: 'pointer' }}
-                                onClick={() => setShowResumeModal(false)}
-                            >
-                                Close
-                            </button>
-                            <button 
-                                className="search-submit-btn"
-                                onClick={() => {
-                                    setShowResumeModal(false);
-                                    fetchJobsAndMatch(resumeText, searchQuery, searchLocation);
-                                }}
-                            >
-                                Save & Re-Calculate All Matches
-                            </button>
-                        </div>
                     </div>
                 </div>
             )}
