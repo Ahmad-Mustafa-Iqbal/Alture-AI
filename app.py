@@ -1,21 +1,15 @@
 """
-Alture AI — Hugging Face Space Entrypoint
-=========================================
-Launches the FastAPI backend and mounted React frontend on Hugging Face Spaces (Port 7860).
+Alture AI — Hugging Face Space Production Entrypoint
+===================================================
+Directly runs the FastAPI application and React web frontend on Port 7860.
+No conflicting Gradio dependencies needed!
 """
 
 import os
 import uvicorn
-import gradio as gr
-from deployment.backend.main import app as fastapi_app
-
-# Mount Gradio into FastAPI for Hugging Face Spaces SDK compatibility
-demo = gr.Blocks(title="Alture AI — Job Intelligence & ATS Engine")
-
-# Mount Gradio into FastAPI so both the React UI at / and Gradio are active
-app = gr.mount_gradio_app(fastapi_app, demo, path="/gradio")
+from deployment.backend.main import app
 
 if __name__ == "__main__":
     port = int(os.environ.get("PORT", 7860))
-    print(f"🚀 Launching Alture AI on Hugging Face Space (Port {port})...")
+    print(f"🚀 Launching Alture AI Production Engine on Hugging Face Spaces (Port {port})...")
     uvicorn.run(app, host="0.0.0.0", port=port)
