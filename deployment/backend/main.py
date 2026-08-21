@@ -89,6 +89,35 @@ async def match_against_jobs(request: BatchMatchRequest):
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Error ranking global jobs: {str(e)}")
 
+@app.get("/api/v1/jobs/live", tags=["Live Job Stream"])
+async def get_live_jobs(limit: int = 15):
+    """
+    Fetch real-time live remote tech jobs from the public Remotive API.
+    """
+    from .live_jobs_service import fetch_live_global_jobs
+    live_jobs = fetch_live_global_jobs(limit=limit)
+    return {"status": "success", "count": len(live_jobs), "jobs": live_jobs}
+
+@app.post("/api/v1/match-live-jobs", response_model=BatchMatchResponse, tags=["Live Job Stream"])
+async def match_against_live_jobs(request: BatchMatchRequest, limit: int = 12):
+    """
+    Fetch live real-world remote tech jobs and rank them in real-time against candidate resume.
+    """
+    from .live_jobs_service import fetch_live_global_jobs
+    try:
+        live_jobs = fetch_live_global_jobs(limit=limit)
+        ranked_results = matcher_service.match_against_jobs_list(
+            resume_text=request.resume_text,
+            jobs=live_jobs
+        )
+        return BatchMatchResponse(
+            status="success",
+            total_jobs_evaluated=len(ranked_results),
+            ranked_jobs=ranked_results
+        )
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Error matching against live jobs: {str(e)}")
+
 # ----------------------------------------------------
 # SERVE FRONTEND STATIC FILES
 # ----------------------------------------------------

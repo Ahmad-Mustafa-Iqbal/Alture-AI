@@ -3,7 +3,7 @@ import re
 import numpy as np
 import joblib
 from typing import List, Dict, Set, Tuple, Any
-from .schemas import MatchResult, SkillAnalysis, RankedJobMatch
+from .schemas import MatchResult, SkillAnalysis, RankedJobMatch, JobPosting
 from .sample_data import SAMPLE_JOBS
 
 # 500+ Skill Ontology with Aliases
@@ -225,13 +225,9 @@ class AltureMatcherService:
             jd_word_count=jd_len
         )
 
-    def match_against_global_jobs(self, resume_text: str, specific_job_ids: List[str] = None) -> List[RankedJobMatch]:
+    def match_against_jobs_list(self, resume_text: str, jobs: List[JobPosting]) -> List[RankedJobMatch]:
         results = []
-        jobs_to_evaluate = SAMPLE_JOBS
-        if specific_job_ids:
-            jobs_to_evaluate = [j for j in SAMPLE_JOBS if j.id in specific_job_ids]
-
-        for job in jobs_to_evaluate:
+        for job in jobs:
             match_res = self.analyze_match(resume_text, job.jd_text)
             results.append(RankedJobMatch(
                 job_id=job.id,
@@ -251,6 +247,12 @@ class AltureMatcherService:
         # Sort descending by ATS Score (High to Low ranking)
         results.sort(key=lambda x: x.ats_score, reverse=True)
         return results
+
+    def match_against_global_jobs(self, resume_text: str, specific_job_ids: List[str] = None) -> List[RankedJobMatch]:
+        jobs_to_evaluate = SAMPLE_JOBS
+        if specific_job_ids:
+            jobs_to_evaluate = [j for j in SAMPLE_JOBS if j.id in specific_job_ids]
+        return self.match_against_jobs_list(resume_text, jobs_to_evaluate)
 
 # Singleton matcher instance
 matcher_service = AltureMatcherService()

@@ -12,6 +12,7 @@ function App() {
     // Result State
     const [matchResult, setMatchResult] = useState(null);
     const [globalMatches, setGlobalMatches] = useState([]);
+    const [isLiveFeed, setIsLiveFeed] = useState(false);
     const [loading, setLoading] = useState(false);
     const [errorMsg, setErrorMsg] = useState("");
 
@@ -63,7 +64,7 @@ function App() {
         }
     };
 
-    // Trigger Batch Global Jobs Match
+    // Trigger Batch Global Jobs Match (Curated)
     const handleMatchGlobalJobs = async () => {
         if (!resumeText.trim()) {
             setErrorMsg("Please provide a resume to match against global job feeds.");
@@ -71,6 +72,7 @@ function App() {
         }
         setErrorMsg("");
         setLoading(true);
+        setIsLiveFeed(false);
         try {
             const res = await fetch("/api/v1/match-jobs", {
                 method: "POST",
@@ -88,6 +90,37 @@ function App() {
             }
         } catch (err) {
             setErrorMsg("Network error connecting to API.");
+        } finally {
+            setLoading(false);
+        }
+    };
+
+    // Trigger Live Real-Time Remote Jobs Scrape & Match
+    const handleMatchLiveJobs = async () => {
+        if (!resumeText.trim()) {
+            setErrorMsg("Please provide a resume to match against live job feeds.");
+            return;
+        }
+        setErrorMsg("");
+        setLoading(true);
+        setIsLiveFeed(true);
+        try {
+            const res = await fetch("/api/v1/match-live-jobs?limit=12", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({
+                    resume_text: resumeText
+                })
+            });
+            const data = await res.json();
+            if (res.ok) {
+                setGlobalMatches(data.ranked_jobs);
+                setActiveTab("global_jobs");
+            } else {
+                setErrorMsg(data.detail || "Live matching failed.");
+            }
+        } catch (err) {
+            setErrorMsg("Network error connecting to live jobs API.");
         } finally {
             setLoading(false);
         }
@@ -352,21 +385,38 @@ function App() {
                 {/* TAB 2: GLOBAL JOB DISCOVERY & RANKING */}
                 {activeTab === 'global_jobs' && (
                     <div>
-                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.75rem' }}>
-                            <span style={{ fontSize: '0.98rem', color: 'var(--text-muted)' }}>
-                                Showing {globalMatches.length} openings ranked by suitability for the current candidate profile.
-                            </span>
-                            <button className="primary-btn" style={{ padding: '7px 18px', fontSize: '0.88rem' }} onClick={handleMatchGlobalJobs} disabled={loading}>
-                                {loading ? "Scoring..." : "Refresh Rankings"}
-                            </button>
+                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.75rem', flexWrap: 'wrap', gap: '1rem' }}>
+                            <div>
+                                <span style={{ fontSize: '0.98rem', color: 'var(--text-muted)' }}>
+                                    Showing {globalMatches.length} openings ranked by suitability for the candidate profile.
+                                </span>
+                                {isLiveFeed && (
+                                    <span style={{ marginLeft: '10px', fontSize: '0.74rem', fontFamily: 'var(--font-mono)', padding: '2px 8px', background: '#ecfdf5', color: '#047857', border: '1px solid #a7f3d0', borderRadius: '4px', fontWeight: 'bold' }}>
+                                        ● LIVE REMOTIVE API STREAM
+                                    </span>
+                                )}
+                            </div>
+                            <div style={{ display: 'flex', gap: '8px' }}>
+                                <button className="secondary-btn" style={{ padding: '7px 16px', fontSize: '0.86rem' }} onClick={handleMatchGlobalJobs} disabled={loading}>
+                                    Curated Benchmarks
+                                </button>
+                                <button className="primary-btn" style={{ padding: '7px 18px', fontSize: '0.86rem' }} onClick={handleMatchLiveJobs} disabled={loading}>
+                                    {loading && isLiveFeed ? "Fetching Live..." : "📡 Fetch Real-Time Live Jobs"}
+                                </button>
+                            </div>
                         </div>
 
                         {globalMatches.length === 0 ? (
                             <div style={{ textAlign: 'center', padding: '4rem 2rem', background: '#ffffff', borderRadius: '16px', border: '1px solid var(--border-subtle)', boxShadow: 'var(--shadow-card)' }}>
                                 <p style={{ color: 'var(--text-muted)', marginBottom: '1.25rem', fontSize: '1.05rem' }}>No global openings evaluated yet.</p>
-                                <button className="primary-btn" onClick={handleMatchGlobalJobs} disabled={loading}>
-                                    Evaluate Against Global Feed
-                                </button>
+                                <div style={{ display: 'flex', justifyContent: 'center', gap: '1rem' }}>
+                                    <button className="primary-btn" onClick={handleMatchLiveJobs} disabled={loading}>
+                                        📡 Fetch Real-Time Live Remote Jobs
+                                    </button>
+                                    <button className="secondary-btn" onClick={handleMatchGlobalJobs} disabled={loading}>
+                                        Use Curated Global Benchmark
+                                    </button>
+                                </div>
                             </div>
                         ) : (
                             <div className="jobs-grid">
