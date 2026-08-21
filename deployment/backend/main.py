@@ -1,9 +1,14 @@
-import os
-import uvicorn
-from fastapi import FastAPI, HTTPException, File, UploadFile
+"""
+Alture AI — Backend Main FastAPI Application
+===================================================
+Production REST API server powering hybrid NLP search, ATS matching, Gemini coaching, and PDF reports.
+"""
+
+from fastapi import FastAPI, HTTPException, UploadFile, File, APIRouter
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.staticfiles import StaticFiles
 from fastapi.responses import FileResponse, Response
+import os
 
 from .schemas import (
     SingleMatchRequest, SingleMatchResponse,
@@ -26,7 +31,7 @@ app = FastAPI(
     redoc_url="/redoc"
 )
 
-# Enable CORS for local development and microservices
+# Enable CORS for local development and Vercel cross-origin deployment
 app.add_middleware(
     CORSMiddleware,
     allow_origins=["*"],
@@ -35,26 +40,39 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-# ----------------------------------------------------
-# API ROUTERS
-# ----------------------------------------------------
+@app.middleware("http")
+async def cors_preflight_middleware(request, call_next):
+    if request.method == "OPTIONS":
+        return Response(
+            status_code=200,
+            headers={
+                "Access-Control-Allow-Origin": "*",
+                "Access-Control-Allow-Methods": "*",
+                "Access-Control-Allow-Headers": "*",
+            }
+        )
+    response = await call_next(request)
+    response.headers["Access-Control-Allow-Origin"] = "*"
+    response.headers["Access-Control-Allow-Methods"] = "*"
+    response.headers["Access-Control-Allow-Headers"] = "*"
+    return response
+
 @app.get("/health", tags=["Health & System"])
 async def health_check():
     """Health check endpoint to verify backend operational readiness."""
     return {
         "status": "healthy",
-        "service": "Alture AI Matcher Engine",
-        "version": "2.0.0",
-        "sbert_loaded": matcher_service.sbert_model is not None,
-        "models_loaded": matcher_service.xgb_model is not None or matcher_service.lgb_model is not None
+        "engine": "SentenceTransformer all-MiniLM-L6-v2 + XGBoost Tuned Classifier",
+        "version": "2.0.0"
     }
 
-@app.post("/api/v1/upload-resume", tags=["Resume Processing"])
+# ----------------------------------------------------
+# API ROUTER (Dual Mounted at /v1 and /api/v1)
+# ----------------------------------------------------
+router = APIRouter()
+
+@router.post("/upload-resume", tags=["Resume Processing"])
 async def upload_resume(file: UploadFile = File(...)):
-    """
-    Upload and parse candidate resume file (.pdf, .docx, .txt).
-    Extracts text, candidate name, contact details, and word counts.
-    """
     try:
         contents = await file.read()
         if len(contents) == 0:
@@ -62,26 +80,21 @@ async def upload_resume(file: UploadFile = File(...)):
         
         parsed_result = parse_resume_file(filename=file.filename, file_bytes=contents)
         if parsed_result["word_count"] < 10:
-            raise HTTPException(status_code=400, detail="Could not extract readable text from document. Please ensure file is not password-protected or scanned image.")
+            raise HTTPException(status_code=400, detail="Could not extract readable text from document.")
             
         return parsed_result
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Error parsing resume file: {str(e)}")
 
-@app.get("/api/v1/sample-data", response_model=SampleDataResponse, tags=["Sample Data"])
+@router.get("/sample-data", response_model=SampleDataResponse, tags=["Sample Data"])
 async def get_sample_data():
-    """Retrieve preloaded test candidate personas and global job postings."""
     return SampleDataResponse(
         personas=SAMPLE_PERSONAS,
         jobs=SAMPLE_JOBS
     )
 
-@app.post("/api/v1/analyze", response_model=SingleMatchResponse, tags=["ATS Matching"])
+@router.post("/analyze", response_model=SingleMatchResponse, tags=["ATS Matching"])
 async def analyze_single_match(request: SingleMatchRequest):
-    """
-    Perform deep hybrid NLP analysis between a single candidate resume and job description.
-    Returns calibrated ATS Compatibility Score, Fit Tier, Matched/Missing Skills, and Actionable Feedback.
-    """
     try:
         match_result = matcher_service.analyze_match(
             resume_text=request.resume_text,
@@ -95,11 +108,8 @@ async def analyze_single_match(request: SingleMatchRequest):
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Inference error during matching: {str(e)}")
 
-@app.post("/api/v1/match-jobs", response_model=BatchMatchResponse, tags=["Global Job Discovery"])
+@router.post("/match-jobs", response_model=BatchMatchResponse, tags=["Global Job Discovery"])
 async def match_against_jobs(request: BatchMatchRequest):
-    """
-    Match candidate resume against multiple global jobs and return ranked results sorted by compatibility score.
-    """
     try:
         ranked_results = matcher_service.match_against_global_jobs(
             resume_text=request.resume_text,
@@ -113,21 +123,14 @@ async def match_against_jobs(request: BatchMatchRequest):
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Error ranking global jobs: {str(e)}")
 
-@app.get("/api/v1/jobs/live", tags=["Live Job Stream"])
+@router.get("/jobs/live", tags=["Live Job Stream"])
 async def get_live_jobs(limit: int = 15):
-    """
-    Fetch real-time live remote tech jobs from the public Remotive API.
-    """
     from .live_jobs_service import fetch_live_global_jobs
     live_jobs = fetch_live_global_jobs(limit=limit)
     return {"status": "success", "count": len(live_jobs), "jobs": live_jobs}
 
-@app.post("/api/v1/search-and-match-jobs", response_model=BatchMatchResponse, tags=["Live Job Stream"])
+@router.post("/search-and-match-jobs", response_model=BatchMatchResponse, tags=["Live Job Stream"])
 async def search_and_match_jobs(request: LiveJobSearchRequest):
-    """
-    Multi-source job search and ATS matching across Pakistan and Worldwide tech feeds.
-    Supports JSearch (LinkedIn, Indeed, Glassdoor) and Remotive.
-    """
     from .live_jobs_service import fetch_multi_source_jobs
     try:
         jobs, provider_name = fetch_multi_source_jobs(
@@ -152,14 +155,8 @@ async def search_and_match_jobs(request: LiveJobSearchRequest):
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Error searching and matching jobs: {str(e)}")
 
-@app.post("/api/v1/ai-coach", response_model=AICoachResponse, tags=["AI Career Coach"])
+@router.post("/ai-coach", response_model=AICoachResponse, tags=["AI Career Coach"])
 async def ai_career_coach(request: AICoachRequest):
-    """
-    Gemini-powered AI Career Coach providing:
-    - 'tips': Resume improvement suggestions based on skill gaps
-    - 'cover_letter': Tailored cover letter generation
-    - 'interview_prep': Interview preparation questions
-    """
     try:
         if request.action == "tips":
             result = coach_service.get_resume_tips(
@@ -185,7 +182,7 @@ async def ai_career_coach(request: AICoachRequest):
                 matched_skills=request.matched_skills
             )
         else:
-            raise HTTPException(status_code=400, detail=f"Unknown action: {request.action}. Use 'tips', 'cover_letter', or 'interview_prep'.")
+            raise HTTPException(status_code=400, detail=f"Unknown action: {request.action}.")
 
         return AICoachResponse(
             status="success",
@@ -198,12 +195,8 @@ async def ai_career_coach(request: AICoachRequest):
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"AI Coach error: {str(e)}")
 
-@app.post("/api/v1/download-ats-report", tags=["PDF Reports"])
+@router.post("/download-ats-report", tags=["PDF Reports"])
 async def download_ats_audit_report(request: ATSReportRequest):
-    """
-    Generate and stream an enterprise-grade ATS Audit Report PDF
-    complete with score breakdown, verified skills, critical gaps, and recommendations.
-    """
     try:
         pdf_bytes = generate_ats_audit_pdf(
             candidate_name=request.candidate_name or "Candidate",
@@ -214,38 +207,29 @@ async def download_ats_audit_report(request: ATSReportRequest):
             fit_tier=request.fit_tier,
             matched_skills=request.matched_skills or [],
             missing_skills=request.missing_skills or [],
-            tips=request.tips or [],
-            overall_assessment=request.overall_assessment or ""
+            actionable_feedback=request.actionable_feedback or []
         )
-        safe_name = "".join(c for c in request.candidate_name if c.isalnum() or c in (' ', '_')).rstrip().replace(' ', '_')
-        filename = f"Alture_AI_ATS_Audit_{safe_name or 'Report'}.pdf"
-
+        safe_filename = f"ATS_Report_{request.candidate_name.replace(' ', '_')}.pdf"
         return Response(
             content=pdf_bytes,
             media_type="application/pdf",
-            headers={
-                "Content-Disposition": f'attachment; filename="{filename}"'
-            }
+            headers={"Content-Disposition": f"attachment; filename={safe_filename}"}
         )
     except Exception as e:
-        raise HTTPException(status_code=500, detail=f"Error generating PDF report: {str(e)}")
+        raise HTTPException(status_code=500, detail=f"PDF report generation error: {str(e)}")
 
-# ----------------------------------------------------
-# SERVE FRONTEND STATIC FILES
-# ----------------------------------------------------
-FRONTEND_DIR = os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), "frontend")
+# Mount router under both /v1 and /api/v1
+app.include_router(router, prefix="/v1")
+app.include_router(router, prefix="/api/v1")
 
-if os.path.exists(FRONTEND_DIR):
-    app.mount("/static", StaticFiles(directory=FRONTEND_DIR), name="static")
+# Mount Static Files for local dev
+frontend_dir = os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), "frontend")
+if os.path.exists(frontend_dir):
+    app.mount("/static", StaticFiles(directory=frontend_dir), name="static")
 
     @app.get("/", tags=["Frontend"])
-    async def serve_frontend():
-        index_path = os.path.join(FRONTEND_DIR, "index.html")
+    async def serve_index():
+        index_path = os.path.join(frontend_dir, "index.html")
         if os.path.exists(index_path):
             return FileResponse(index_path)
-        return {"message": "Alture AI FastAPI Backend is running. Open /docs for Swagger API."}
-
-if __name__ == "__main__":
-    port = int(os.environ.get("PORT", 8000))
-    print(f"🚀 Starting Alture AI FastAPI Production Server on http://localhost:{port}")
-    uvicorn.run("deployment.backend.main:app", host="0.0.0.0", port=port, reload=True)
+        return {"message": "Alture AI API Backend Active"}
