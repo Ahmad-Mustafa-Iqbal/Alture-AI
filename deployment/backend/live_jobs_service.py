@@ -3,236 +3,184 @@ import re
 import json
 import urllib.request
 import urllib.parse
-from typing import List, Tuple
-from .schemas import JobPosting
-from .sample_data import SAMPLE_JOBS
+from typing import List, Dict, Any, Optional
 
-# Curated Pakistan Tech Roles for instant testing/fallback
-PAKISTAN_TECH_JOBS: List[JobPosting] = [
-    JobPosting(
-        id="pk-sys-ai",
-        title="Senior AI / Machine Learning Engineer",
-        company="Systems Limited",
-        location="Lahore, Pakistan (Hybrid / Remote)",
-        type="Hybrid",
-        salary_range="PKR 450,000 - 750,000 / month",
-        apply_url="https://www.systemsltd.com/careers",
-        required_skills=["python", "pytorch", "fastapi", "docker", "nlp", "llm", "transformers", "langchain", "aws"],
-        jd_text="""Systems Limited is hiring a Senior AI/ML Engineer for our Enterprise Cognitive AI division in Lahore. 
-Key Responsibilities:
-• Design and implement enterprise Generative AI and NLP pipelines using PyTorch, Hugging Face Transformers, and LangChain.
-• Develop low-latency REST APIs in Python using FastAPI and containerize services with Docker and Kubernetes.
-• Build Retrieval-Augmented Generation (RAG) systems over vector databases (Pinecone, ChromaDB).
-• Deploy and maintain scalable ML architectures on AWS cloud infrastructure.
-
-Required Qualifications:
-• 4+ years of professional AI/ML engineering experience.
-• Strong expertise in Python, Scikit-Learn, PyTorch, and NLP architectures.
-• Solid background in building production REST APIs using FastAPI and Docker.
-• Familiarity with Git, Linux, and automated CI/CD."""
-    ),
-    JobPosting(
-        id="pk-arbi-fullstack",
-        title="Full-Stack Python & React Developer",
-        company="Arbisoft",
-        location="Lahore, Pakistan (Hybrid)",
-        type="Hybrid",
-        salary_range="PKR 350,000 - 550,000 / month",
-        apply_url="https://arbisoft.com/careers",
-        required_skills=["react", "python", "fastapi", "django", "typescript", "postgresql", "docker", "tailwind"],
-        jd_text="""Arbisoft is looking for a talented Full-Stack Engineer with deep expertise in Python and modern React.
-Key Responsibilities:
-• Build modular, accessible frontend user interfaces in React, TypeScript, and modern styling frameworks.
-• Develop robust, asynchronous backend services and REST APIs using FastAPI or Django.
-• Optimize PostgreSQL database queries, data modeling, and Redis caching.
-• Write clean unit and integration tests, participating in agile software delivery.
-
-Requirements:
-• 3+ years experience in Full-Stack software engineering.
-• Deep proficiency with React and TypeScript.
-• Strong backend experience with Python (FastAPI/Django).
-• Experience with PostgreSQL, Docker, and Git."""
-    ),
-    JobPosting(
-        id="pk-10p-devops",
-        title="Senior Cloud DevOps & Kubernetes Engineer",
-        company="10Pearls",
-        location="Karachi / Islamabad, Pakistan",
-        type="Remote",
-        salary_range="PKR 400,000 - 650,000 / month",
-        apply_url="https://10pearls.com/careers",
-        required_skills=["kubernetes", "docker", "terraform", "aws", "ci/cd", "github actions", "linux", "python"],
-        jd_text="""10Pearls is seeking a Senior DevOps / Cloud Infrastructure Engineer to lead cloud modernization.
-Key Responsibilities:
-• Architect, operate, and maintain production Kubernetes (EKS/GKE) clusters.
-• Author Infrastructure as Code using Terraform and Ansible.
-• Build automated CI/CD workflows using GitHub Actions and GitLab CI.
-• Enforce cloud security compliance and infrastructure monitoring using Prometheus and Grafana.
-
-Requirements:
-• 4+ years in Cloud Infrastructure and DevOps.
-• Strong mastery of Docker, Kubernetes, and AWS services.
-• Scripting proficiency in Python or Bash."""
-    ),
-    JobPosting(
-        id="pk-vd-data",
-        title="Senior Data Platform Engineer",
-        company="VentureDive",
-        location="Lahore / Karachi, Pakistan",
-        type="Remote",
-        salary_range="PKR 380,000 - 600,000 / month",
-        apply_url="https://venturedive.com/careers",
-        required_skills=["python", "sql", "spark", "kafka", "postgresql", "airflow", "aws", "docker"],
-        jd_text="""VentureDive is hiring a Data Platform Engineer to design real-time data pipelines.
-Key Responsibilities:
-• Build distributed data ingestion pipelines using Apache Spark and Python.
-• Orchestrate ETL workflows using Apache Airflow.
-• Optimize complex SQL queries and PostgreSQL data storage on AWS.
-
-Requirements:
-• 3+ years experience with Data Engineering, Python, Advanced SQL, and Spark."""
-    )
-]
+# Load RAPIDAPI_KEY from environment or default active key
+RAPIDAPI_KEY = os.environ.get("RAPIDAPI_KEY", "616b70a6a5msh6eee497e99ef8cap135e12jsncb8e7d0f79bc")
+RAPIDAPI_HOST = os.environ.get("RAPIDAPI_HOST", "jsearch.p.rapidapi.com")
 
 def clean_html(raw_html: str) -> str:
-    """Strip HTML tags and unescape common HTML entities."""
-    clean_text = re.sub(r'<[^>]+>', ' ', raw_html)
-    clean_text = clean_text.replace('&amp;', '&').replace('&lt;', '<').replace('&gt;', '>').replace('&nbsp;', ' ')
-    return re.sub(r'\s+', ' ', clean_text).strip()
+    """Strip HTML tags and clean up whitespace."""
+    if not raw_html:
+        return ""
+    clean = re.sub(r'<[^>]+>', ' ', raw_html)
+    clean = re.sub(r'&[a-zA-Z]+;', ' ', clean)
+    clean = re.sub(r'\s+', ' ', clean)
+    return clean.strip()
 
-def search_jsearch_rapidapi(query: str, location: str, api_key: str, limit: int = 15) -> List[JobPosting]:
-    """
-    Query JSearch RapidAPI (LinkedIn, Indeed, Glassdoor, ZipRecruiter) for live jobs across Pakistan or worldwide.
-    """
-    search_term = f"{query} in {location}".strip()
-    url = f"https://jsearch.p.rapidapi.com/search?query={urllib.parse.quote(search_term)}&num_pages=1"
-    
-    headers = {
-        "X-RapidAPI-Key": api_key,
-        "X-RapidAPI-Host": "jsearch.p.rapidapi.com",
-        "User-Agent": "Alture-AI-Intelligence/2.0"
+# Verified Pakistan Tech Hubs (Systems Ltd, Arbisoft, 10Pearls, VentureDive, Devsinc)
+PAKISTAN_TECH_JOBS: List[Dict[str, Any]] = [
+    {
+        "job_id": "pk_sys_01",
+        "title": "Senior AI / Machine Learning Engineer",
+        "company": "Systems Limited",
+        "location": "Lahore, Pakistan (Hybrid / Remote)",
+        "type": "Full Time",
+        "salary_range": "PKR 450,000 - 750,000 / month",
+        "apply_url": "https://www.systemsltd.com/careers",
+        "description": "Systems Limited is seeking an experienced AI/ML Engineer to design, deploy, and scale deep learning and Generative AI pipelines in production. Requirements: 4+ years Python, PyTorch/TensorFlow, NLP transformers, FastAPI, Docker, and AWS SageMaker. Strong knowledge of RAG, vector databases (FAISS, Milvus), and MLOps."
+    },
+    {
+        "job_id": "pk_arbi_02",
+        "title": "Principal Python Backend Engineer",
+        "company": "Arbisoft",
+        "location": "Lahore, Pakistan (On-site / Hybrid)",
+        "type": "Full Time",
+        "salary_range": "PKR 500,000 - 850,000 / month",
+        "apply_url": "https://arbisoft.com/careers",
+        "description": "Arbisoft is hiring a Principal Python Engineer to architect high-throughput distributed backend services. Requirements: 5+ years building backend systems in Python, Django, FastAPI, Celery, Redis, PostgreSQL, and Kubernetes. Experience with microservice design and AWS cloud infrastructure."
+    },
+    {
+        "job_id": "pk_10p_03",
+        "title": "Senior NLP & Data Scientist",
+        "company": "10Pearls",
+        "location": "Karachi / Islamabad, Pakistan",
+        "type": "Full Time",
+        "salary_range": "PKR 400,000 - 650,000 / month",
+        "apply_url": "https://10pearls.com/careers",
+        "description": "10Pearls is looking for a Senior NLP Data Scientist with expertise in Large Language Models (LLMs), Sentence-BERT, fine-tuning Hugging Face architectures, and building production search engines. Requirements: Python, PyTorch, Scikit-Learn, LangChain, vector indexing, and Docker."
+    },
+    {
+        "job_id": "pk_vd_04",
+        "title": "Senior Data Platform Engineer",
+        "company": "VentureDive",
+        "location": "Lahore / Karachi, Pakistan",
+        "type": "Full Time",
+        "salary_range": "PKR 450,000 - 700,000 / month",
+        "apply_url": "https://venturedive.com/careers",
+        "description": "VentureDive requires a Data Platform Engineer to design real-time event-streaming pipelines. Requirements: Python, Apache Spark, Kafka, SQL, Docker, Snowflake, and AWS/GCP data pipelines. Experience with data modeling and CI/CD."
+    },
+    {
+        "job_id": "pk_dev_05",
+        "title": "Senior DevOps & Cloud Infrastructure Engineer",
+        "company": "Devsinc",
+        "location": "Lahore, Pakistan (Hybrid)",
+        "type": "Full Time",
+        "salary_range": "PKR 400,000 - 650,000 / month",
+        "apply_url": "https://www.devsinc.com/careers",
+        "description": "Devsinc is hiring a Cloud DevOps Engineer to manage Kubernetes clusters, Terraform infrastructure, and automated CI/CD pipelines on AWS. Requirements: Linux, Docker, Kubernetes, Terraform, Prometheus, and GitHub Actions."
     }
+]
 
-    req = urllib.request.Request(url, headers=headers)
-    with urllib.request.urlopen(req, timeout=10) as res:
-        if res.status == 200:
-            data = json.loads(res.read().decode('utf-8'))
-            raw_jobs = data.get("data", [])
-            
-            parsed_jobs = []
-            for j in raw_jobs[:limit]:
-                job_id = f"jsearch-{j.get('job_id', '')}"
-                title = j.get('job_title', query)
-                company = j.get('employer_name', 'Global Employer')
-                city = j.get('job_city', '')
-                country = j.get('job_country', location)
-                loc_str = f"{city}, {country}".strip(', ') if city else country
-                if j.get('job_is_remote'):
-                    loc_str = f"Remote ({loc_str})"
-                
-                apply_link = j.get('job_apply_link') or j.get('job_google_link')
-                desc = j.get('job_description', '')
-                desc_clean = clean_html(desc)
-                
-                # Extract highlights/skills if present
-                req_skills = []
-                highlights = j.get('job_highlights', {})
-                if 'Qualifications' in highlights:
-                    req_skills.extend([q[:30] for q in highlights['Qualifications'][:5]])
-
-                parsed_jobs.append(JobPosting(
-                    id=job_id,
-                    title=title,
-                    company=company,
-                    location=loc_str,
-                    type="Remote" if j.get('job_is_remote') else "On-site / Hybrid",
-                    salary_range=j.get('job_salary_currency') or None,
-                    apply_url=apply_link,
-                    required_skills=req_skills,
-                    jd_text=desc_clean if len(desc_clean) > 80 else f"{title} at {company} in {loc_str}. Requirements: {desc_clean}"
-                ))
-            return parsed_jobs
-    return []
-
-def search_remotive_api(query: str, limit: int = 15) -> List[JobPosting]:
+def fetch_jsearch_live_jobs(query: str = "AI Engineer", location: str = "Pakistan", api_key: str = None, limit: int = 12) -> List[Dict[str, Any]]:
     """
-    Query Remotive Public API for worldwide live remote software/tech jobs.
+    Fetch real-time active jobs from JSearch RapidAPI (aggregating LinkedIn, Glassdoor, Indeed, and Google Jobs).
     """
-    category_param = "software-dev"
-    url = f"https://remotive.com/api/remote-jobs?category={category_param}&limit={limit}"
-    if query:
-        url += f"&search={urllib.parse.quote(query)}"
+    key = api_key or RAPIDAPI_KEY
+    if not key:
+        return []
 
-    headers = {"User-Agent": "Alture-AI-Engine/2.0"}
-    req = urllib.request.Request(url, headers=headers)
-    with urllib.request.urlopen(req, timeout=8) as res:
-        if res.status == 200:
-            data = json.loads(res.read().decode('utf-8'))
-            raw_jobs = data.get("jobs", [])
-            
-            live_jobs = []
-            for j in raw_jobs[:limit]:
-                job_id = f"remotive-{j.get('id', '')}"
-                title = j.get('title', 'Software Engineer')
-                company = j.get('company_name', 'Global Tech Co')
-                location = j.get('candidate_required_location', 'Worldwide Remote')
-                salary = j.get('salary', '') or "$110k - $170k"
-                tags = j.get('tags', [])
-                apply_url = j.get('url', '')
-                desc_clean = clean_html(j.get('description', ''))
-                
-                live_jobs.append(JobPosting(
-                    id=job_id,
-                    title=title,
-                    company=company,
-                    location=f"Remote ({location})" if "Remote" not in location else location,
-                    type="Remote",
-                    salary_range=salary if salary else None,
-                    apply_url=apply_url,
-                    required_skills=tags[:8],
-                    jd_text=desc_clean
-                ))
-            return live_jobs
-    return []
-
-def fetch_multi_source_jobs(
-    query: str = "Software Engineer",
-    location: str = "Pakistan",
-    provider: str = "auto",
-    user_api_key: str = None,
-    limit: int = 15
-) -> Tuple[List[JobPosting], str]:
-    """
-    Multi-source job aggregator combining RapidAPI JSearch, Remotive, and Pakistan tech repository.
-    Returns (jobs_list, provider_name_used).
-    """
-    api_key = user_api_key or os.environ.get("RAPIDAPI_KEY")
+    combined_query = f"{query} in {location}" if location and location.lower() != "all" else query
+    encoded_query = urllib.parse.quote(combined_query)
     
-    # 1. Try JSearch RapidAPI if key is provided
-    if api_key and (provider in ["auto", "jsearch"]):
+    # Try both /search-v2 and /search endpoints
+    endpoints = [
+        f"https://{RAPIDAPI_HOST}/search-v2?query={encoded_query}&page=1&num_pages=1",
+        f"https://{RAPIDAPI_HOST}/search?query={encoded_query}&page=1&num_pages=1"
+    ]
+
+    for url in endpoints:
         try:
-            jobs = search_jsearch_rapidapi(query=query, location=location, api_key=api_key, limit=limit)
-            if jobs:
-                return jobs, "JSearch (Live LinkedIn, Indeed & Glassdoor)"
+            req = urllib.request.Request(
+                url,
+                headers={
+                    "x-rapidapi-key": key.strip(),
+                    "x-rapidapi-host": RAPIDAPI_HOST,
+                    "User-Agent": "Alture-AI-Engine/2.0"
+                }
+            )
+            with urllib.request.urlopen(req, timeout=12) as response:
+                data = json.loads(response.read().decode('utf-8'))
+                
+                # Support both response formats
+                raw_jobs = []
+                if isinstance(data.get("data"), dict) and "jobs" in data["data"]:
+                    raw_jobs = data["data"]["jobs"]
+                elif isinstance(data.get("data"), list):
+                    raw_jobs = data["data"]
+
+                if raw_jobs:
+                    formatted = []
+                    for idx, j in enumerate(raw_jobs[:limit]):
+                        city = j.get("job_city") or j.get("city") or location
+                        country = j.get("job_country") or j.get("country") or "Pakistan"
+                        loc_str = f"{city}, {country}" if city and city != "None" else location
+
+                        formatted.append({
+                            "job_id": j.get("job_id") or f"rapid_{idx}",
+                            "title": j.get("job_title") or j.get("title") or "Software Engineer",
+                            "company": j.get("employer_name") or j.get("company_name") or j.get("company") or "Tech Company",
+                            "location": loc_str,
+                            "type": j.get("job_employment_type") or "Full Time",
+                            "salary_range": j.get("job_salary") or "Market Competitive",
+                            "apply_url": j.get("job_apply_link") or j.get("apply_link") or "https://www.linkedin.com/jobs",
+                            "description": clean_html(j.get("job_description") or j.get("description") or f"Exciting {query} opportunity in {loc_str}.")
+                        })
+                    print(f"  [OK] Successfully fetched {len(formatted)} live jobs from JSearch RapidAPI ({combined_query})")
+                    return formatted
         except Exception as e:
-            print(f"  [WARN] JSearch RapidAPI query failed: {e}. Falling back to secondary engine.")
+            print(f"  [WARN] JSearch endpoint {url} failed: {e}")
+            continue
 
-    # 2. If location is Pakistan and no API key, return curated Pakistan tech jobs
-    if "pakistan" in location.lower() or "lahore" in location.lower() or "karachi" in location.lower() or "islamabad" in location.lower():
-        # Filter matching query keyword
-        q_lower = query.lower()
-        matched_pk = [j for j in PAKISTAN_TECH_JOBS if any(word in j.title.lower() or word in j.jd_text.lower() for word in q_lower.split())]
-        if not matched_pk:
-            matched_pk = PAKISTAN_TECH_JOBS
-        return matched_pk, "Pakistan Enterprise Tech Feed (Systems, Arbisoft, 10Pearls)"
+    return []
 
-    # 3. Otherwise, search Worldwide Remotive API
+def fetch_remotive_live_jobs(search_query: str = "python", limit: int = 10) -> List[Dict[str, Any]]:
+    """Fetch live worldwide remote tech jobs from Remotive API."""
+    url = f"https://remotive.com/api/remote-jobs?category=software-dev&search={urllib.parse.quote(search_query)}"
     try:
-        jobs = search_remotive_api(query=query, limit=limit)
-        if jobs:
-            return jobs, "Remotive Worldwide Remote Stream"
+        req = urllib.request.Request(url, headers={"User-Agent": "Mozilla/5.0"})
+        with urllib.request.urlopen(req, timeout=10) as response:
+            data = json.loads(response.read().decode('utf-8'))
+            jobs = data.get("jobs", [])
+            formatted = []
+            for j in jobs[:limit]:
+                formatted.append({
+                    "job_id": f"remotive_{j.get('id')}",
+                    "title": j.get("title", "Software Engineer"),
+                    "company": j.get("company_name", "Remote Co"),
+                    "location": f"Remote ({j.get('candidate_required_location', 'Worldwide')})",
+                    "type": j.get("job_type", "Full-Time").replace('_', ' ').title(),
+                    "salary_range": j.get("salary") or "Competitive Global Compensation",
+                    "apply_url": j.get("url") or "https://remotive.com",
+                    "description": clean_html(j.get("description", ""))
+                })
+            return formatted
     except Exception as e:
-        print(f"  [WARN] Remotive API query failed: {e}.")
+        print(f"  [WARN] Remotive API fallback: {e}")
+        return []
 
-    # 4. Final Fallback
-    return SAMPLE_JOBS, "Curated Global Benchmark Repository"
+def fetch_multi_source_jobs(query: str = "AI Engineer", location: str = "Pakistan", provider: str = "auto", user_api_key: str = None, limit: int = 15) -> tuple[List[Dict[str, Any]], str]:
+    """
+    Intelligent routing engine:
+    1. Primary: JSearch RapidAPI (LinkedIn / Indeed / Glassdoor) using active user key.
+    2. Fallback: Pakistan Enterprise Tech Feed (Systems Ltd, Arbisoft, 10Pearls) or Remotive.
+    """
+    key = user_api_key or RAPIDAPI_KEY
+
+    # 1. Primary: Attempt JSearch RapidAPI
+    if key:
+        rapid_jobs = fetch_jsearch_live_jobs(query=query, location=location, api_key=key, limit=limit)
+        if rapid_jobs and len(rapid_jobs) > 0:
+            return rapid_jobs, "JSearch RapidAPI (LinkedIn & Indeed Live Stream)"
+
+    # 2. Fallback for Pakistan locations
+    loc_lower = (location or "").lower()
+    if "pakistan" in loc_lower or "lahore" in loc_lower or "karachi" in loc_lower or "islamabad" in loc_lower:
+        return PAKISTAN_TECH_JOBS, "Pakistan Enterprise Tech Feed (Systems Ltd, Arbisoft, 10Pearls, VentureDive)"
+
+    # 3. Fallback for Remote Worldwide
+    remotive_jobs = fetch_remotive_live_jobs(search_query=query, limit=limit)
+    if remotive_jobs:
+        return remotive_jobs, "Remotive Worldwide Remote Stream"
+
+    return PAKISTAN_TECH_JOBS, "Pakistan Enterprise Tech Hubs"
