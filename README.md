@@ -3,8 +3,9 @@ title: Alture AI — Job Intelligence & Explainable ATS Engine
 emoji: 🧠
 colorFrom: blue
 colorTo: indigo
-sdk: docker
-app_port: 7860
+sdk: gradio
+sdk_version: "4.44.0"
+app_file: app.py
 pinned: false
 license: mit
 short_description: Hybrid NLP Job Recommendation & ATS Engine
