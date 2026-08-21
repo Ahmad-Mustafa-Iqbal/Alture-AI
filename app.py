@@ -31,6 +31,5 @@ with gr.Blocks(title="Alture AI Backend API") as demo:
 app = gr.mount_gradio_app(fastapi_app, demo, path="/gradio")
 
 if __name__ == "__main__":
-    port = int(os.environ.get("PORT", 7860))
-    print(f"🚀 Launching Alture AI ZeroGPU Engine on Port {port}...")
-    uvicorn.run("app:app", host="0.0.0.0", port=port, reload=False)
+    print("🚀 Launching Alture AI ZeroGPU Engine via demo.launch()...")
+    demo.launch()
