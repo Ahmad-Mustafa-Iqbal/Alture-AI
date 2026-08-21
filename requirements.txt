@@ -25,7 +25,8 @@ catboost>=1.2.0
 optuna>=3.4.0
 
 # Deployment & Backend
-fastapi>=0.104.0
+fastapi>=0.104.0,<=0.111.0
+starlette<0.38.0
 uvicorn>=0.24.0
 gradio>=4.0.0
 pydantic>=2.0.0
