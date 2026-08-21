@@ -40,9 +40,16 @@ Project-Folder/
 │   ├── models.py                # Model training & evaluation utilities
 │   └── utils.py                 # Helper functions
 │
-├── deployment/                  # Gradio web application
-│   ├── app.py                   # Main deployment app
-│   └── model_utils.py           # Model loading & inference
+├── deployment/                  # Production Full-Stack Deployment
+│   ├── backend/                 # FastAPI REST Microservice
+│   │   ├── main.py              # Application entrypoint & static mounting
+│   │   ├── matcher_service.py   # Hybrid NLP & 500+ Skill Ontology engine
+│   │   ├── schemas.py           # Pydantic V2 request/response schemas
+│   │   └── sample_data.py       # Global tech job postings & candidate personas
+│   └── frontend/                # Modern Modular React UI
+│       ├── index.html           # HTML5 shell
+│       ├── app.js               # React 18 state & component architecture
+│       └── styles.css           # Modern dark SaaS design system
 │
 ├── models/                      # Saved trained models
 │   └── (auto-generated .joblib files)
@@ -68,8 +75,8 @@ Project-Folder/
 
 ### Step 1: Clone the Repository
 ```bash
-git clone <repository-url>
-cd Project-Folder
+git clone https://github.com/Ahmad-Mustafa-Iqbal/Alture-AI.git
+cd Alture-AI
 ```
 
 ### Step 2: Install Dependencies
@@ -81,13 +88,17 @@ python -m spacy download en_core_web_sm
 ### Step 3: Run the Notebook (Optional for inspection / re-training)
 Open and run `notebooks/Capstone_Full_Pipeline.ipynb` in Jupyter Lab, VS Code, or Google Colab. All cells are pre-executed with visible outputs and visualizations.
 
-### Step 4: Run the Deployment App
+### Step 4: Launch Production FastAPI Backend & React UI
 ```bash
-python deployment/app.py
+# Launch the server (Serves both the REST API and the React Frontend on Port 8000)
+python -m deployment.backend.main
 ```
-The Gradio app will launch at `http://localhost:7860`.
-
-## 📈 Model Performance & Results
+Or with Uvicorn:
+```bash
+uvicorn deployment.backend.main:app --reload --port 8000
+```
+- 🌐 **Interactive Web UI**: Open [http://localhost:8000](http://localhost:8000) in your browser.
+- 📖 **Interactive OpenAPI Swagger Docs**: Open [http://localhost:8000/docs](http://localhost:8000/docs).
 
 ## 📈 Model Performance & Results (Alture AI v2.0 Benchmark)
 
@@ -114,11 +125,15 @@ The Gradio app will launch at `http://localhost:7860`.
 ## 🛠️ Technologies Used
 
 - **Python 3.9+**
-- **scikit-learn** — ML models, TF-IDF, metrics
-- **sentence-transformers** — Sentence-BERT embeddings
-- **spaCy** — NLP, named entity recognition, skill extraction
-- **XGBoost** — Gradient boosted meta-learner
-- **Gradio** — Web deployment
+- **FastAPI & Uvicorn** — Production asynchronous REST API
+- **React 18** — Component-driven interactive web interface
+- **Pydantic V2** — Data validation and schemas
+- **scikit-learn** — TF-IDF, linear models, ensemble metrics
+- **sentence-transformers** — Sentence-BERT (`all-MiniLM-L6-v2`) & Cross-Encoders
+- **spaCy** — Named entity recognition & skill extraction ontology
+- **XGBoost / LightGBM / CatBoost** — Gradient boosted meta-learners
+- **matplotlib / seaborn** — Statistical evaluation visualization
+- **datasets** (HuggingFace) — Ingestion of resume-ATS corpus
 - **matplotlib / seaborn / plotly** — Visualization
 - **datasets** (HuggingFace) — Dataset loading
 
