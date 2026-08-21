@@ -1,6 +1,6 @@
 const { useState, useEffect, useRef } = React;
 
-// Company Logo Icons generator with vibrant colors
+// Company Logo Badges
 const COMPANY_LOGOS = {
     "Slack": { bg: "#4a154b", icon: "💬", color: "#ffffff" },
     "Figma": { bg: "#1abcfe", icon: "🎨", color: "#ffffff" },
@@ -24,6 +24,7 @@ function getCompanyBadge(name = "") {
 }
 
 function App() {
+    const [currentPage, setCurrentPage] = useState("search"); // 'search' (Page 1) | 'matcher' (Page 2)
     const [sampleData, setSampleData] = useState({ personas: [], jobs: [] });
     
     // User Profile & Resume State
@@ -35,14 +36,14 @@ function App() {
     const [isUploading, setIsUploading] = useState(false);
     const [isDragging, setIsDragging] = useState(false);
     const [showResumeModal, setShowResumeModal] = useState(false);
-    const [modalTab, setModalTab] = useState("upload"); // 'upload' | 'paste' | 'personas'
+    const [modalTab, setModalTab] = useState("upload");
     
     const fileInputRef = useRef(null);
 
-    // Search & Filter State
+    // Search & Filter State (Page 1)
     const [searchQuery, setSearchQuery] = useState("AI Engineer");
     const [searchLocation, setSearchLocation] = useState("Pakistan");
-    const [activeFilter, setActiveFilter] = useState("all");
+    const [activeFilter, setActiveFilter] = useState("pk");
     
     // Jobs & Matches State
     const [jobsList, setJobsList] = useState([]);
@@ -50,8 +51,9 @@ function App() {
     const [loading, setLoading] = useState(false);
     const [errorMsg, setErrorMsg] = useState("");
     const [savedJobs, setSavedJobs] = useState(new Set());
+    const [providerUsed, setProviderUsed] = useState("Pakistan Enterprise Tech Feed");
 
-    // Load initial personas and run initial match
+    // Load initial data
     useEffect(() => {
         fetch("/api/v1/sample-data")
             .then(res => res.json())
@@ -68,9 +70,8 @@ function App() {
             .catch(err => console.log("Failed loading sample data:", err));
     }, []);
 
-    // Core Matching Fetcher
+    // Core Matching & Search Fetcher
     const fetchJobsAndMatch = async (currResume, query, loc) => {
-        if (!currResume || !currResume.trim()) return;
         setLoading(true);
         setErrorMsg("");
         try {
@@ -78,7 +79,7 @@ function App() {
                 method: "POST",
                 headers: { "Content-Type": "application/json" },
                 body: JSON.stringify({
-                    resume_text: currResume,
+                    resume_text: currResume || "Experienced Software and AI Engineer with Python, FastAPI, and Machine Learning expertise.",
                     query: query || "Software Engineer",
                     location: loc || "Pakistan",
                     limit: 15
@@ -87,6 +88,7 @@ function App() {
             const data = await res.json();
             if (res.ok && data.ranked_jobs) {
                 setJobsList(data.ranked_jobs);
+                setProviderUsed(data.provider_used || "Multi-Source Engine");
                 if (data.ranked_jobs.length > 0) {
                     setSelectedJob(data.ranked_jobs[0]);
                 }
@@ -124,7 +126,8 @@ function App() {
                     setUserName(data.candidate_name);
                 }
                 setShowResumeModal(false);
-                // Immediately trigger matching with newly uploaded resume!
+                setCurrentPage("matcher");
+                // Immediately calculate ATS matches for all jobs
                 fetchJobsAndMatch(data.extracted_text, searchQuery, searchLocation);
             } else {
                 setErrorMsg(data.detail || "Failed to parse uploaded resume document.");
@@ -139,11 +142,6 @@ function App() {
     const handleSearchSubmit = (e) => {
         if (e) e.preventDefault();
         fetchJobsAndMatch(resumeText, searchQuery, searchLocation);
-    };
-
-    const handleClearSearch = () => {
-        setSearchQuery("");
-        setSearchLocation("");
     };
 
     const toggleSaveJob = (jobId) => {
@@ -164,301 +162,411 @@ function App() {
 
     return (
         <div className="app-container">
-            {/* 1. TOP PROFILE NAVBAR */}
-            <nav className="top-profile-bar">
+            {/* 1. TOP MAIN HEADER WITH CLEAN 2-PAGE NAVIGATION */}
+            <header className="top-profile-bar">
                 <div className="profile-info">
                     <div className="brand-logo-wrapper">
                         <img src="/static/logo.png" alt="Alture AI" className="header-brand-logo" onError={(e) => { e.target.style.display = 'none'; }} />
-                        <span className="brand-name-tag">Alture</span>
+                        <span className="brand-name-tag">Alture AI</span>
                     </div>
 
-                    <div className="profile-avatar">
-                        {userName.split(' ').map(n => n[0]).join('').substring(0, 2)}
-                    </div>
-                    <div className="profile-text">
-                        <div className="profile-name-row">
-                            <span className="profile-name">{userName}</span>
-                            <span className="profile-badge-icon">✓</span>
-                            <span style={{ color: '#cbd5e1' }}>|</span>
-                            <span className="profile-title">{userRole}</span>
-                        </div>
-                        <div className="profile-status">
-                            Available for work • <span style={{ color: '#0284c7', cursor: 'pointer', textDecoration: 'underline' }} onClick={() => setShowResumeModal(true)}>
-                                {uploadedFileName ? `📄 ${uploadedFileName} Active` : "Upload / Update CV"}
-                            </span>
-                        </div>
+                    {/* TWO PRIMARY PAGES TABS */}
+                    <div className="main-nav-tabs">
+                        <button 
+                            className={`main-nav-tab ${currentPage === 'search' ? 'active' : ''}`}
+                            onClick={() => setCurrentPage('search')}
+                        >
+                            🔍 1. Live Job Discovery
+                        </button>
+                        <button 
+                            className={`main-nav-tab ${currentPage === 'matcher' ? 'active' : ''}`}
+                            onClick={() => setCurrentPage('matcher')}
+                        >
+                            🧠 2. AI Resume Matcher & Score
+                        </button>
                     </div>
                 </div>
 
                 <div className="profile-actions">
                     <button className="resume-trigger-btn" onClick={() => setShowResumeModal(true)}>
-                        <span>📁 {uploadedFileName ? `Replace ${uploadedFileName}` : "Upload / Edit Resume"}</span>
+                        <span>📁 {uploadedFileName ? `📄 ${uploadedFileName}` : "Upload My Resume (PDF)"}</span>
                     </button>
-                    <button className="icon-btn" title="Saved candidates">
-                        <span>♡</span>
-                    </button>
-                    <button className="icon-btn" title="Bookmarks">
-                        <span>🔖</span>
-                    </button>
-                    <button className="get-in-touch-btn" onClick={() => alert(`Alture AI Intelligent Job Matcher\nCandidate: ${userName}\nReady for global hiring.`)}>
-                        Get in touch
-                    </button>
+                    <div className="profile-user-pill">
+                        <div className="profile-avatar">
+                            {userName.split(' ').map(n => n[0]).join('').substring(0, 2)}
+                        </div>
+                        <span style={{ fontSize: '0.85rem', fontWeight: '700' }}>{userName}</span>
+                    </div>
                 </div>
-            </nav>
+            </header>
 
-            {/* 2. HERO SEARCH BANNER */}
-            <section className="hero-search-section">
-                <div className="search-box-container">
-                    <div className="search-input-group">
-                        <span className="search-icon">🔍</span>
-                        <input 
-                            type="text" 
-                            className="search-input" 
-                            placeholder="Job title, technical skill, or keyword"
-                            value={searchQuery}
-                            onChange={(e) => setSearchQuery(e.target.value)}
-                            onKeyDown={(e) => e.key === 'Enter' && handleSearchSubmit()}
-                        />
-                    </div>
+            {/* -------------------------------------------------------------
+               PAGE 1: LIVE JOB DISCOVERY PORTAL (Search & Direct Apply)
+            -------------------------------------------------------------- */}
+            {currentPage === 'search' && (
+                <div>
+                    {/* Hero Search Section */}
+                    <section className="hero-search-section">
+                        <div style={{ textAlign: 'center', marginBottom: '1.25rem', color: '#ffffff' }}>
+                            <h1 style={{ fontSize: '1.85rem', fontWeight: '800', letterSpacing: '-0.02em', marginBottom: '4px' }}>
+                                Find & Apply to Tech Jobs in Pakistan & Worldwide
+                            </h1>
+                            <p style={{ fontSize: '0.95rem', color: '#bae6fd' }}>
+                                Search real-time open positions across LinkedIn, Indeed, Systems Ltd, Arbisoft & Global Remote feeds.
+                            </p>
+                        </div>
 
-                    <div className="search-divider"></div>
+                        <div className="search-box-container">
+                            <div className="search-input-group">
+                                <span className="search-icon">🔍</span>
+                                <input 
+                                    type="text" 
+                                    className="search-input" 
+                                    placeholder="Job title, technical skill, or keyword"
+                                    value={searchQuery}
+                                    onChange={(e) => setSearchQuery(e.target.value)}
+                                    onKeyDown={(e) => e.key === 'Enter' && handleSearchSubmit()}
+                                />
+                            </div>
 
-                    <div className="search-input-group">
-                        <span className="search-icon">📍</span>
-                        <input 
-                            type="text" 
-                            className="search-input" 
-                            placeholder="Country, city (e.g. Pakistan, Lahore, Remote)"
-                            value={searchLocation}
-                            onChange={(e) => setSearchLocation(e.target.value)}
-                            onKeyDown={(e) => e.key === 'Enter' && handleSearchSubmit()}
-                        />
-                    </div>
+                            <div className="search-divider"></div>
 
-                    {(searchQuery || searchLocation) && (
-                        <button className="search-clear-btn" onClick={handleClearSearch}>
-                            Clear
+                            <div className="search-input-group">
+                                <span className="search-icon">📍</span>
+                                <input 
+                                    type="text" 
+                                    className="search-input" 
+                                    placeholder="City or Country (e.g. Lahore, Karachi, Pakistan, Remote)"
+                                    value={searchLocation}
+                                    onChange={(e) => setSearchLocation(e.target.value)}
+                                    onKeyDown={(e) => e.key === 'Enter' && handleSearchSubmit()}
+                                />
+                            </div>
+
+                            {(searchQuery || searchLocation) && (
+                                <button className="search-clear-btn" onClick={() => { setSearchQuery(""); setSearchLocation(""); }}>
+                                    Clear
+                                </button>
+                            )}
+
+                            <button className="search-submit-btn" onClick={handleSearchSubmit} disabled={loading}>
+                                {loading ? "Searching..." : "Search Jobs"}
+                            </button>
+                        </div>
+                    </section>
+
+                    {/* Quick Filter Pills Bar */}
+                    <div className="filter-bar-container">
+                        <button className={`filter-pill ${activeFilter === 'pk' ? 'active' : ''}`} onClick={() => { setActiveFilter('pk'); setSearchLocation("Pakistan"); fetchJobsAndMatch(resumeText, searchQuery, "Pakistan"); }}>
+                            🇵🇰 All Pakistan (Lahore, Karachi, Islamabad)
                         </button>
-                    )}
+                        <button className={`filter-pill ${activeFilter === 'lahore' ? 'active' : ''}`} onClick={() => { setActiveFilter('lahore'); setSearchLocation("Lahore"); fetchJobsAndMatch(resumeText, searchQuery, "Lahore"); }}>
+                            📍 Lahore Tech Hub
+                        </button>
+                        <button className={`filter-pill ${activeFilter === 'karachi' ? 'active' : ''}`} onClick={() => { setActiveFilter('karachi'); setSearchLocation("Karachi"); fetchJobsAndMatch(resumeText, searchQuery, "Karachi"); }}>
+                            📍 Karachi Tech Hub
+                        </button>
+                        <button className={`filter-pill ${activeFilter === 'remote' ? 'active' : ''}`} onClick={() => { setActiveFilter('remote'); setSearchLocation("Remote"); fetchJobsAndMatch(resumeText, searchQuery, "Remote"); }}>
+                            🌍 Worldwide Remote
+                        </button>
+                        <span style={{ marginLeft: 'auto', fontSize: '0.78rem', fontFamily: 'var(--font-mono)', padding: '4px 10px', background: '#e0f2fe', color: '#0369a1', border: '1px solid #bae6fd', borderRadius: '6px', fontWeight: 'bold' }}>
+                            📡 {providerUsed}
+                        </span>
+                    </div>
 
-                    <button className="search-submit-btn" onClick={handleSearchSubmit} disabled={loading}>
-                        {loading ? "Searching..." : "Search"}
-                    </button>
+                    {/* Main 2-Column Job Split Board */}
+                    <main className="main-layout">
+                        {/* Left Feed */}
+                        <div className="jobs-feed-column">
+                            <div className="feed-header">
+                                <span className="recommended-title">
+                                    Available Openings <span className="recommended-count">({jobsList.length})</span>
+                                </span>
+                                <div className="sort-by-text">
+                                    Location: <span className="sort-by-val">{searchLocation || "All"}</span>
+                                </div>
+                            </div>
+
+                            <div className="jobs-list-container">
+                                {jobsList.map(job => {
+                                    const isSelected = selectedJob && selectedJob.job_id === job.job_id;
+                                    const isSaved = savedJobs.has(job.job_id);
+                                    const badge = getCompanyBadge(job.company);
+
+                                    return (
+                                        <div 
+                                            key={job.job_id} 
+                                            className={`job-feed-card ${isSelected ? 'active' : ''}`}
+                                            onClick={() => setSelectedJob(job)}
+                                        >
+                                            <div className="card-top-row">
+                                                <div className="company-logo-badge" style={{ backgroundColor: badge.bg, color: badge.color }}>
+                                                    {badge.icon}
+                                                </div>
+                                                <div className="card-title-group">
+                                                    <h3 className="card-job-title">{job.title}</h3>
+                                                    <div className="card-company-name">{job.company} • {job.location}</div>
+                                                </div>
+                                                <button 
+                                                    className="save-job-icon" 
+                                                    onClick={(e) => { e.stopPropagation(); toggleSaveJob(job.job_id); }}
+                                                >
+                                                    {isSaved ? "Saved 🔖" : "Save 🔖"}
+                                                </button>
+                                            </div>
+
+                                            {/* Tags Row */}
+                                            <div className="card-tags-row">
+                                                <span className="tag-badge fulltime">Full Time</span>
+                                                <span className="tag-badge remote">{job.type || "Remote"}</span>
+                                                {job.salary_range && <span className="tag-badge senior">{job.salary_range}</span>}
+                                                <span className="card-post-time">Active opening</span>
+                                            </div>
+                                        </div>
+                                    );
+                                })}
+                            </div>
+                        </div>
+
+                        {/* Right Detail Pane */}
+                        {selectedJob ? (
+                            <div className="detail-pane">
+                                <div className="detail-header">
+                                    <div>
+                                        <h2 className="detail-job-title">{selectedJob.title}</h2>
+                                        <div className="detail-subhead">
+                                            <strong>{selectedJob.company}</strong> • {selectedJob.location}
+                                        </div>
+                                    </div>
+                                    <span style={{ fontSize: '1.25rem', color: '#94a3b8' }}>⋮</span>
+                                </div>
+
+                                <div className="detail-meta-list">
+                                    <div className="detail-meta-item">
+                                        <span className="detail-meta-icon">💼</span>
+                                        <span><strong>Full-time</strong> · Professional Tech Opening</span>
+                                    </div>
+                                    <div className="detail-meta-item">
+                                        <span className="detail-meta-icon">💰</span>
+                                        <span>{selectedJob.salary_range || "Market Competitive Compensation"}</span>
+                                    </div>
+                                    <div className="detail-meta-item">
+                                        <span className="detail-meta-icon">📋</span>
+                                        <span>Required Skills: {selectedJob.matched_skills_sample.concat(selectedJob.missing_skills_sample).slice(0, 6).join(', ') || "Python, React, Software Engineering"}</span>
+                                    </div>
+                                </div>
+
+                                {/* Action Buttons */}
+                                <div className="detail-action-row">
+                                    <a 
+                                        href={selectedJob.apply_url || "https://www.linkedin.com/jobs"} 
+                                        target="_blank" 
+                                        rel="noreferrer" 
+                                        className="apply-btn"
+                                    >
+                                        Apply Direct on Official Site ↗
+                                    </a>
+                                    <button 
+                                        className="save-detail-btn"
+                                        onClick={() => {
+                                            setCurrentPage('matcher');
+                                        }}
+                                    >
+                                        🧠 Match My Resume Against This Job
+                                    </button>
+                                </div>
+
+                                <div className="job-body-section">
+                                    <h3 className="job-body-title">Job Overview & Requirements</h3>
+                                    <p className="job-body-text">
+                                        {selectedJob.title} position at {selectedJob.company}. You will participate in architecture, development, code optimization, and delivery of production systems.
+                                    </p>
+                                </div>
+                            </div>
+                        ) : (
+                            <div className="detail-pane" style={{ textAlign: 'center', padding: '4rem 2rem' }}>
+                                <p style={{ color: '#94a3b8' }}>Select a job from the list to view details.</p>
+                            </div>
+                        )}
+                    </main>
                 </div>
-            </section>
+            )}
 
-            {/* 3. FILTER PILLS BAR */}
-            <div className="filter-bar-container">
-                <button className={`filter-pill ${activeFilter === 'all' ? 'active' : ''}`} onClick={() => { setSearchLocation("Pakistan"); handleSearchSubmit(); }}>
-                    🇵🇰 Pakistan (Lahore, Karachi) ⌵
-                </button>
-                <button className="filter-pill" onClick={() => { setSearchLocation("Remote"); handleSearchSubmit(); }}>
-                    🌍 Remote Worldwide ⌵
-                </button>
-                <button className="filter-pill" onClick={() => { setSearchQuery("AI / Machine Learning"); handleSearchSubmit(); }}>
-                    🧠 AI / ML Roles ⌵
-                </button>
-                <button className="filter-pill" onClick={() => { setSearchQuery("Full Stack Python"); handleSearchSubmit(); }}>
-                    💻 Full-Stack & Backend ⌵
-                </button>
-                <button className="filter-pill" onClick={() => { setSearchQuery("DevOps Kubernetes"); handleSearchSubmit(); }}>
-                    ☁️ Cloud & DevOps ⌵
-                </button>
-                {uploadedFileName && (
-                    <span style={{ marginLeft: 'auto', fontSize: '0.78rem', fontFamily: 'var(--font-mono)', padding: '4px 10px', background: '#ecfdf5', color: '#047857', border: '1px solid #a7f3d0', borderRadius: '999px', fontWeight: 'bold' }}>
-                        ✓ {uploadedFileName} ({uploadedWordCount} words)
-                    </span>
-                )}
-            </div>
+            {/* -------------------------------------------------------------
+               PAGE 2: AI RESUME-TO-JOB MATCHER & SCREENING ENGINE
+            -------------------------------------------------------------- */}
+            {currentPage === 'matcher' && (
+                <div style={{ maxWidth: '1240px', margin: '2rem auto', padding: '0 1.5rem' }}>
+                    {/* Header Banner */}
+                    <div style={{ background: '#ffffff', border: '1px solid #e2e8f0', borderRadius: '16px', padding: '2rem', marginBottom: '2rem', boxShadow: '0 4px 14px rgba(0,0,0,0.04)', display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '1.5rem' }}>
+                        <div>
+                            <span style={{ fontSize: '0.78rem', fontWeight: '800', textTransform: 'uppercase', color: '#0284c7', letterSpacing: '0.05em' }}>
+                                🧠 Multi-Modal NLP Intelligence Engine
+                            </span>
+                            <h2 style={{ fontSize: '1.75rem', fontWeight: '800', color: '#0f172a', margin: '4px 0' }}>
+                                Resume Compatibility & ATS Screening
+                            </h2>
+                            <p style={{ color: '#64748b', fontSize: '0.92rem' }}>
+                                Candidate: <strong style={{ color: '#0f172a' }}>{userName}</strong> • Document: <strong style={{ color: '#0284c7' }}>{uploadedFileName || "Active Profile Resume"}</strong> ({resumeText.split(/\s+/).filter(Boolean).length} words)
+                            </p>
+                        </div>
 
-            {errorMsg && (
-                <div style={{ maxWidth: '1240px', margin: '0 auto 1.5rem', padding: '0 1.5rem' }}>
-                    <div style={{ padding: '12px 16px', background: '#fef2f2', border: '1px solid #fecaca', borderRadius: '8px', color: '#991b1b', fontSize: '0.9rem' }}>
-                        ⚠️ {errorMsg}
+                        <div style={{ display: 'flex', gap: '10px' }}>
+                            <button className="primary-btn" style={{ padding: '10px 20px', fontSize: '0.9rem' }} onClick={() => setShowResumeModal(true)}>
+                                📁 Upload / Change Resume (PDF)
+                            </button>
+                        </div>
+                    </div>
+
+                    {/* 2-Column Split: Ranked Matches vs Deep Match Inspector */}
+                    <div className="main-layout" style={{ margin: 0, padding: 0 }}>
+                        {/* Left Feed: Ranked by ATS % */}
+                        <div className="jobs-feed-column">
+                            <div className="feed-header">
+                                <span className="recommended-title">
+                                    🏆 Ranked Job Matches <span className="recommended-count">({jobsList.length})</span>
+                                </span>
+                                <div className="sort-by-text">
+                                    Ranked by: <span className="sort-by-val" style={{ color: '#15803d' }}>Highest ATS Match % ⌵</span>
+                                </div>
+                            </div>
+
+                            <div className="jobs-list-container">
+                                {jobsList.map(job => {
+                                    const isSelected = selectedJob && selectedJob.job_id === job.job_id;
+                                    const badge = getCompanyBadge(job.company);
+
+                                    return (
+                                        <div 
+                                            key={job.job_id} 
+                                            className={`job-feed-card ${isSelected ? 'active' : ''}`}
+                                            onClick={() => setSelectedJob(job)}
+                                        >
+                                            <div className="card-top-row">
+                                                <div className="company-logo-badge" style={{ backgroundColor: badge.bg, color: badge.color }}>
+                                                    {badge.icon}
+                                                </div>
+                                                <div className="card-title-group">
+                                                    <h3 className="card-job-title">{job.title}</h3>
+                                                    <div className="card-company-name">{job.company} • {job.location}</div>
+                                                </div>
+                                                <div style={{ fontSize: '1.25rem', fontFamily: 'monospace', fontWeight: '800', color: job.fit_tier === 'Good Fit' ? '#15803d' : job.fit_tier === 'Potential Fit' ? '#b45309' : '#b91c1c' }}>
+                                                    {job.ats_score}%
+                                                </div>
+                                            </div>
+
+                                            <div className="profile-match-pill">
+                                                <div className="match-avatar-mini">✓</div>
+                                                <span>{job.fit_tier} Compatibility ({job.matched_skills_count} Skills Matched)</span>
+                                            </div>
+
+                                            <div className="card-tags-row">
+                                                <span className={`tag-badge ${job.fit_tier === 'Good Fit' ? 'senior' : 'fulltime'}`}>{job.fit_tier}</span>
+                                                <span className="tag-badge ats-score">{job.ats_score}% ATS Score</span>
+                                                <span className="card-post-time">Ranked</span>
+                                            </div>
+                                        </div>
+                                    );
+                                })}
+                            </div>
+                        </div>
+
+                        {/* Right Deep ATS Inspector */}
+                        {selectedJob ? (
+                            <div className="detail-pane">
+                                <div className="detail-header">
+                                    <div>
+                                        <h2 className="detail-job-title">{selectedJob.title}</h2>
+                                        <div className="detail-subhead">
+                                            <strong>{selectedJob.company}</strong> • {selectedJob.location}
+                                        </div>
+                                    </div>
+                                    <div className="gauge-score good" style={{ fontSize: '2.5rem', lineHeight: '1' }}>
+                                        {selectedJob.ats_score}%
+                                    </div>
+                                </div>
+
+                                {/* ATS Score Gauge Card */}
+                                <div className="ats-deep-card">
+                                    <div className="ats-deep-header">
+                                        <span className="ats-deep-title">🎯 Model Compatibility Breakdown</span>
+                                        <span className="ats-score-highlight">{selectedJob.fit_tier}</span>
+                                    </div>
+
+                                    <div style={{ marginBottom: '1rem' }}>
+                                        <div style={{ fontSize: '0.8rem', fontWeight: '700', color: '#15803d', marginBottom: '6px' }}>
+                                            ✓ MATCHED SKILLS IN YOUR RESUME ({selectedJob.matched_skills_count}):
+                                        </div>
+                                        <div className="skill-pill-container">
+                                            {selectedJob.matched_skills_sample.map(s => (
+                                                <span key={s} className="spill matched">✓ {s}</span>
+                                            ))}
+                                            {selectedJob.matched_skills_sample.length === 0 && <span style={{ fontSize: '0.75rem', color: '#94a3b8' }}>General contextual match</span>}
+                                        </div>
+                                    </div>
+
+                                    {selectedJob.missing_skills_sample.length > 0 && (
+                                        <div>
+                                            <div style={{ fontSize: '0.8rem', fontWeight: '700', color: '#991b1b', marginBottom: '6px' }}>
+                                                + RECOMMENDED SKILLS TO BOOST SCORE ({selectedJob.missing_skills_count}):
+                                            </div>
+                                            <div className="skill-pill-container">
+                                                {selectedJob.missing_skills_sample.map(s => (
+                                                    <span key={s} className="spill missing">+ Add {s}</span>
+                                                ))}
+                                            </div>
+                                        </div>
+                                    )}
+                                </div>
+
+                                {/* Action Buttons */}
+                                <div className="detail-action-row">
+                                    <a 
+                                        href={selectedJob.apply_url || "https://www.linkedin.com/jobs"} 
+                                        target="_blank" 
+                                        rel="noreferrer" 
+                                        className="apply-btn"
+                                    >
+                                        Apply with this Resume ↗
+                                    </a>
+                                    <button 
+                                        className="save-detail-btn" 
+                                        onClick={() => toggleSaveJob(selectedJob.job_id)}
+                                    >
+                                        {savedJobs.has(selectedJob.job_id) ? "Saved 🔖" : "Save Job 🔖"}
+                                    </button>
+                                </div>
+
+                                <div className="job-body-section">
+                                    <h3 className="job-body-title">Strategic Resume Recommendations</h3>
+                                    <div className="job-body-text">
+                                        • Emphasize your hands-on achievements with {selectedJob.matched_skills_sample.slice(0, 3).join(', ')} in your Experience bullet points.<br/>
+                                        • Quantify your impact with measurable metrics (e.g. latency reduction, scale, throughput).<br/>
+                                        • Ensure standard single-column ATS formatting for maximum readability.
+                                    </div>
+                                </div>
+                            </div>
+                        ) : (
+                            <div className="detail-pane" style={{ textAlign: 'center', padding: '4rem 2rem' }}>
+                                <p style={{ color: '#94a3b8' }}>Select a job from the list to view full ATS score analysis.</p>
+                            </div>
+                        )}
                     </div>
                 </div>
             )}
 
-            {/* 4. MAIN SPLIT MASTER-DETAIL LAYOUT */}
-            <main className="main-layout">
-                {/* Left Column: Recommended Jobs Feed */}
-                <div className="jobs-feed-column">
-                    <div className="feed-header">
-                        <span className="recommended-title">
-                            Recommended jobs <span className="recommended-count">{jobsList.length.toLocaleString()}</span>
-                        </span>
-                        <div className="sort-by-text">
-                            Sort by: <span className="sort-by-val">Best ATS Match ⌵</span>
-                        </div>
-                    </div>
-
-                    <div className="jobs-list-container">
-                        {jobsList.map(job => {
-                            const isSelected = selectedJob && selectedJob.job_id === job.job_id;
-                            const isSaved = savedJobs.has(job.job_id);
-                            const badge = getCompanyBadge(job.company);
-
-                            return (
-                                <div 
-                                    key={job.job_id} 
-                                    className={`job-feed-card ${isSelected ? 'active' : ''}`}
-                                    onClick={() => setSelectedJob(job)}
-                                >
-                                    <div className="card-top-row">
-                                        <div className="company-logo-badge" style={{ backgroundColor: badge.bg, color: badge.color }}>
-                                            {badge.icon}
-                                        </div>
-                                        <div className="card-title-group">
-                                            <h3 className="card-job-title">{job.title}</h3>
-                                            <div className="card-company-name">{job.company} • {job.location}</div>
-                                        </div>
-                                        <button 
-                                            className="save-job-icon" 
-                                            onClick={(e) => { e.stopPropagation(); toggleSaveJob(job.job_id); }}
-                                        >
-                                            {isSaved ? "Saved 🔖" : "Save job 🔖"}
-                                        </button>
-                                    </div>
-
-                                    {/* Profile Match Pill */}
-                                    <div className="profile-match-pill">
-                                        <div className="match-avatar-mini">✓</div>
-                                        <span>Your profile matches this job ({job.ats_score}% Fit)</span>
-                                    </div>
-
-                                    {/* Tags Row */}
-                                    <div className="card-tags-row">
-                                        <span className="tag-badge fulltime">Full Time</span>
-                                        <span className="tag-badge remote">{job.type || "Remote"}</span>
-                                        <span className="tag-badge senior">{job.fit_tier}</span>
-                                        <span className="tag-badge ats-score">{job.ats_score}% ATS Match</span>
-                                        <span className="card-post-time">Active posting</span>
-                                    </div>
-                                </div>
-                            );
-                        })}
-                    </div>
-                </div>
-
-                {/* Right Column: Sticky Job Detail Inspector */}
-                {selectedJob ? (
-                    <div className="detail-pane">
-                        <div className="detail-header">
-                            <div>
-                                <h2 className="detail-job-title">{selectedJob.title}</h2>
-                                <div className="detail-subhead">
-                                    <strong>{selectedJob.company}</strong> • {selectedJob.location} • <span style={{ color: '#0284c7' }}>Verified Tech Partner</span>
-                                </div>
-                            </div>
-                            <span style={{ fontSize: '1.25rem', color: '#94a3b8', cursor: 'pointer' }}>⋮</span>
-                        </div>
-
-                        {/* Metadata Row */}
-                        <div className="detail-meta-list">
-                            <div className="detail-meta-item">
-                                <span className="detail-meta-icon">💼</span>
-                                <span><strong>Full-time</strong> · Senior / Lead Level</span>
-                            </div>
-                            <div className="detail-meta-item">
-                                <span className="detail-meta-icon">🏢</span>
-                                <span>Enterprise Technology · High Growth</span>
-                            </div>
-                            <div className="detail-meta-item">
-                                <span className="detail-meta-icon">💰</span>
-                                <span>{selectedJob.salary_range || "Market Competitive Compensation"}</span>
-                            </div>
-                            <div className="detail-meta-item">
-                                <span className="detail-meta-icon">📋</span>
-                                <span>Skills: {selectedJob.matched_skills_sample.concat(selectedJob.missing_skills_sample).slice(0, 5).join(', ')}</span>
-                            </div>
-                        </div>
-
-                        {/* Action Buttons */}
-                        <div className="detail-action-row">
-                            <a 
-                                href={selectedJob.apply_url || "https://www.linkedin.com/jobs"} 
-                                target="_blank" 
-                                rel="noreferrer" 
-                                className="apply-btn"
-                            >
-                                Apply now ↗
-                            </a>
-                            <button 
-                                className="save-detail-btn"
-                                onClick={() => toggleSaveJob(selectedJob.job_id)}
-                            >
-                                {savedJobs.has(selectedJob.job_id) ? "Saved 🔖" : "Save job 🔖"}
-                            </button>
-                        </div>
-
-                        {/* ATS Deep Analytics & Match Breakdown */}
-                        <div className="ats-deep-card">
-                            <div className="ats-deep-header">
-                                <span className="ats-deep-title">🎯 Alture AI Compatibility Index</span>
-                                <span className="ats-score-highlight">{selectedJob.ats_score}%</span>
-                            </div>
-
-                            <div style={{ marginBottom: '0.75rem' }}>
-                                <div style={{ fontSize: '0.78rem', fontWeight: '700', color: '#15803d', marginBottom: '4px' }}>
-                                    ✓ MATCHED TECHNICAL COMPETENCIES ({selectedJob.matched_skills_count}):
-                                </div>
-                                <div className="skill-pill-container">
-                                    {selectedJob.matched_skills_sample.map(s => (
-                                        <span key={s} className="spill matched">✓ {s}</span>
-                                    ))}
-                                    {selectedJob.matched_skills_sample.length === 0 && <span style={{ fontSize: '0.75rem', color: '#94a3b8' }}>General contextual match</span>}
-                                </div>
-                            </div>
-
-                            {selectedJob.missing_skills_sample.length > 0 && (
-                                <div>
-                                    <div style={{ fontSize: '0.78rem', fontWeight: '700', color: '#991b1b', marginBottom: '4px' }}>
-                                        + RECOMMENDED SKILLS TO BOOST SCORE ({selectedJob.missing_skills_count}):
-                                    </div>
-                                    <div className="skill-pill-container">
-                                        {selectedJob.missing_skills_sample.map(s => (
-                                            <span key={s} className="spill missing">+ {s}</span>
-                                        ))}
-                                    </div>
-                                </div>
-                            )}
-                        </div>
-
-                        {/* Job Description Body */}
-                        <div className="job-body-section">
-                            <h3 className="job-body-title">About the job</h3>
-                            <p className="job-body-text">
-                                We are seeking a high-performing professional to lead and accelerate engineering solutions. You will collaborate directly with top engineering teams to build scalable systems, deploy high-performance microservices, and optimize technical outcomes.
-                            </p>
-                        </div>
-
-                        <div className="job-body-section">
-                            <h3 className="job-body-title">The Role & Requirements</h3>
-                            <div className="job-body-text">
-                                • Proven hands-on experience in building and architecting scalable production software.<br/>
-                                • Strong mastery of core technologies: {selectedJob.matched_skills_sample.join(', ')}.<br/>
-                                • Excellent problem-solving, team collaboration, and communication skills.<br/>
-                                • Demonstrated ownership of distributed systems and end-to-end deliverables.
-                            </div>
-                        </div>
-                    </div>
-                ) : (
-                    <div className="detail-pane" style={{ textAlign: 'center', padding: '4rem 2rem' }}>
-                        <p style={{ color: '#94a3b8' }}>Select a job from the list to view full ATS match breakdown.</p>
-                    </div>
-                )}
-            </main>
-
-            {/* 5. RESUME UPLOAD & EDIT MODAL */}
+            {/* -------------------------------------------------------------
+               RESUME UPLOAD MODAL (PDF / DOCX / TEXT)
+            -------------------------------------------------------------- */}
             {showResumeModal && (
                 <div className="modal-backdrop" onClick={() => setShowResumeModal(false)}>
                     <div className="modal-content" onClick={(e) => e.stopPropagation()}>
                         <div className="modal-header">
-                            <h2 className="modal-title">Candidate CV & Resume Upload</h2>
+                            <h2 className="modal-title">Upload or Edit Candidate CV</h2>
                             <button className="close-btn" onClick={() => setShowResumeModal(false)}>✕</button>
                         </div>
 
-                        {/* Tabs in Modal */}
+                        {/* Tabs */}
                         <div style={{ display: 'flex', gap: '8px', marginBottom: '1.25rem', borderBottom: '1px solid #e2e8f0', paddingBottom: '0.75rem' }}>
                             <button 
                                 style={{ padding: '6px 14px', fontSize: '0.85rem', fontWeight: '700', background: modalTab === 'upload' ? '#0284c7' : '#f1f5f9', color: modalTab === 'upload' ? '#ffffff' : '#475569', border: 'none', borderRadius: '6px', cursor: 'pointer' }}
@@ -480,7 +588,7 @@ function App() {
                             </button>
                         </div>
 
-                        {/* TAB A: FILE UPLOAD DROPZONE */}
+                        {/* TAB A: FILE DROPZONE */}
                         {modalTab === 'upload' && (
                             <div>
                                 <input 
@@ -522,13 +630,12 @@ function App() {
                                 {uploadedFileName && (
                                     <div className="upload-success-banner">
                                         <span>✓ Currently Active Document: <strong>{uploadedFileName}</strong> ({uploadedWordCount} words parsed)</span>
-                                        <span style={{ fontSize: '0.78rem', color: '#047857' }}>All matches calculated live</span>
                                     </div>
                                 )}
                             </div>
                         )}
 
-                        {/* TAB B: RAW TEXT EDITOR */}
+                        {/* TAB B: TEXT EDITOR */}
                         {modalTab === 'paste' && (
                             <div style={{ marginBottom: '1.25rem' }}>
                                 <label style={{ display: 'block', fontSize: '0.8rem', fontWeight: '700', textTransform: 'uppercase', color: '#64748b', marginBottom: '6px' }}>
@@ -583,7 +690,7 @@ function App() {
                                     fetchJobsAndMatch(resumeText, searchQuery, searchLocation);
                                 }}
                             >
-                                Calculate Matches for All Jobs
+                                Save & Re-Calculate All Matches
                             </button>
                         </div>
                     </div>
