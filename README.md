@@ -89,14 +89,19 @@ The Gradio app will launch at `http://localhost:7860`.
 
 ## 📈 Model Performance & Results
 
-| Model | Type | MAE ↓ | RMSE ↓ | R² ↑ | Precision ↑ | F1-Score ↑ | nDCG@10 ↑ |
-|-------|------|:---:|:---:|:---:|:---:|:---:|:---:|
-| TF-IDF + Ridge Regression | Baseline 1 | 18.27 | 22.27 | 0.204 | 0.626 | 0.529 | 0.481 |
-| TF-IDF + Random Forest | Baseline 2 | 17.61 | 20.20 | 0.346 | 0.658 | 0.540 | 0.906 |
-| SBERT + Ridge Regression | Baseline 3 | 18.78 | 22.14 | 0.213 | 0.641 | 0.434 | 0.847 |
-| **Hybrid Model (XGBoost)** | **Proposed (Tuned)** | **18.48** | **21.83** | **0.236** | **0.676** | **0.434** | **0.898** |
+## 📈 Model Performance & Results (Alture AI v2.0 Benchmark)
 
-*Note: Evaluated on independent test holdout (1,020 samples).*
+| Model | Architecture Type | MAE ↓ | RMSE ↓ | R² ↑ | Precision@Top25% ↑ | F1-Score ↑ | nDCG@10 ↑ |
+|:---|:---|:---:|:---:|:---:|:---:|:---:|:---:|
+| Baseline 1: TF-IDF + Ridge | Lexical Linear | 17.55 | 21.40 | 0.265 | 0.674 | 0.611 | 0.670 |
+| Baseline 2: TF-IDF + Random Forest | Lexical Ensemble | 20.53 | 24.07 | 0.070 | 0.444 | 0.090 | 0.490 |
+| Baseline 3: SBERT + Ridge | Dense Semantic | 19.37 | 22.75 | 0.169 | 0.587 | 0.263 | 0.860 |
+| **Proposed: Cross-Encoder + XGBoost** | **Hybrid Attention** | **17.15** | **20.79** | **0.306** | **0.672** | **0.524** | **0.943** |
+| **Proposed: Cross-Encoder + LightGBM** | **Hybrid Fast Tree** | **17.17** | **20.63** | **0.316** | **0.688** | **0.529** | **0.905** |
+| **Proposed: Cross-Encoder + CatBoost** | **Hybrid Categorical** | **18.54** | **21.84** | **0.234** | **0.632** | **0.378** | **0.964** |
+| 🏆 **Proposed: Stacking Super-Ensemble** | **Multi-Modal Blend** | **17.32** | **20.72** | **0.311** | **0.709 (71%)** | **0.502** | **0.947 (95%)** |
+
+*Note: Evaluated on out-of-sample holdout test split (1,275 samples).*
 
 ## 📏 Evaluation Metrics
 
