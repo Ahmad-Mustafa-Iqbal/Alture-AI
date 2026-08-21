@@ -11,6 +11,10 @@ build/
 # Virtual Environment
 venv/
 env/
+
+# Environment secrets (API keys — NEVER commit these!)
+.env
+.env.*
 .env/
 
 # IDE
