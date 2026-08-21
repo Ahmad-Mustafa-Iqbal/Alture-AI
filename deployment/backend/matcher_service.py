@@ -189,7 +189,8 @@ class AltureMatcherService:
         recommendations = []
         if missing_skills:
             top_missing = missing_skills[:3]
-            recommendations.append(f"Add missing core technical skills to your resume: {', '.join([f"'{s.upper()}'" for s in top_missing])}.")
+            missing_str = ", ".join(f"'{s.upper()}'" for s in top_missing)
+            recommendations.append(f"Add missing core technical skills to your resume: {missing_str}.")
         
         if len_ratio < 0.5:
             recommendations.append("Your resume appears too brief relative to the job requirements. Expand upon your project achievements and technical responsibilities.")
