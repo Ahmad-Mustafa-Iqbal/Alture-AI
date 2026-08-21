@@ -5,6 +5,7 @@ colorFrom: blue
 colorTo: indigo
 sdk: gradio
 app_file: app.py
+hardware: cpu-basic
 pinned: false
 license: mit
 short_description: Hybrid NLP Job Recommendation & ATS Engine
