@@ -35,6 +35,8 @@ data/
 models/*.joblib
 models/*.pkl
 models/*.bin
+models/*.npz
+*.npz
 
 # OS files
 .DS_Store
