@@ -52,6 +52,12 @@ function App() {
     const [savedJobs, setSavedJobs] = useState(new Set());
     const [providerUsed, setProviderUsed] = useState("Pakistan Enterprise Tech Feed");
 
+    // AI Coach State
+    const [coachData, setCoachData] = useState(null);
+    const [coachLoading, setCoachLoading] = useState(false);
+    const [coachTab, setCoachTab] = useState("tips"); // 'tips' | 'cover_letter' | 'interview_prep'
+    const [coachError, setCoachError] = useState("");
+
     // Load initial data
     useEffect(() => {
         fetch("/api/v1/sample-data")
@@ -155,7 +161,42 @@ function App() {
         setUserRole(persona.title);
         setUploadedFileName("");
         setUploadedWordCount(persona.resume_text.split(/\s+/).filter(Boolean).length);
+        setCoachData(null);
         fetchJobsAndMatch(persona.resume_text, searchQuery, searchLocation);
+    };
+
+    // AI Coach Handler
+    const fetchAICoach = async (action) => {
+        if (!selectedJob || !resumeText) return;
+        setCoachLoading(true);
+        setCoachError("");
+        setCoachTab(action);
+        try {
+            const res = await fetch("/api/v1/ai-coach", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({
+                    resume_text: resumeText,
+                    job_title: selectedJob.title,
+                    job_description: `${selectedJob.title} at ${selectedJob.company}. Location: ${selectedJob.location}. Type: ${selectedJob.type}. Required skills include expertise in software engineering and technical development.`,
+                    company: selectedJob.company,
+                    matched_skills: selectedJob.matched_skills_sample || [],
+                    missing_skills: selectedJob.missing_skills_sample || [],
+                    ats_score: selectedJob.ats_score || 0,
+                    action: action
+                })
+            });
+            const data = await res.json();
+            if (res.ok) {
+                setCoachData({ action, ...data.data });
+            } else {
+                setCoachError(data.detail || "AI Coach request failed.");
+            }
+        } catch (err) {
+            setCoachError("Failed to connect to AI Coach.");
+        } finally {
+            setCoachLoading(false);
+        }
     };
 
     return (
@@ -608,13 +649,138 @@ function App() {
                                     </button>
                                 </div>
 
-                                <div className="job-body-section">
-                                    <h3 className="job-body-title">Strategic Resume Recommendations</h3>
-                                    <div className="job-body-text">
-                                        • Emphasize your hands-on achievements with {selectedJob.matched_skills_sample.slice(0, 3).join(', ')} in your Experience bullet points.<br/>
-                                        • Quantify your impact with measurable metrics (e.g. latency reduction, scale, throughput).<br/>
-                                        • Ensure standard single-column ATS formatting for maximum readability.
+                                {/* ═══ GEMINI AI CAREER COACH PANEL ═══ */}
+                                <div className="coach-panel">
+                                    <div className="coach-header">
+                                        <div>
+                                            <span className="coach-badge">✨ Powered by Google Gemini</span>
+                                            <h3 className="coach-title">AI Career Coach</h3>
+                                        </div>
                                     </div>
+
+                                    {/* Coach Action Tabs */}
+                                    <div className="coach-tabs">
+                                        <button 
+                                            className={`coach-tab ${coachTab === 'tips' ? 'active' : ''}`}
+                                            onClick={() => fetchAICoach('tips')}
+                                            disabled={coachLoading}
+                                        >
+                                            💡 Resume Tips
+                                        </button>
+                                        <button 
+                                            className={`coach-tab ${coachTab === 'cover_letter' ? 'active' : ''}`}
+                                            onClick={() => fetchAICoach('cover_letter')}
+                                            disabled={coachLoading}
+                                        >
+                                            ✉️ Cover Letter
+                                        </button>
+                                        <button 
+                                            className={`coach-tab ${coachTab === 'interview_prep' ? 'active' : ''}`}
+                                            onClick={() => fetchAICoach('interview_prep')}
+                                            disabled={coachLoading}
+                                        >
+                                            🎤 Interview Prep
+                                        </button>
+                                    </div>
+
+                                    {/* Loading State */}
+                                    {coachLoading && (
+                                        <div className="coach-loading">
+                                            <div className="coach-spinner"></div>
+                                            <span>AI is analyzing your resume against this job...</span>
+                                        </div>
+                                    )}
+
+                                    {/* Error */}
+                                    {coachError && <div className="coach-error">{coachError}</div>}
+
+                                    {/* Coach Results */}
+                                    {coachData && !coachLoading && (
+                                        <div className="coach-results">
+                                            <div className="coach-powered-by">
+                                                🤖 {coachData.powered_by || 'AI Engine'}
+                                            </div>
+
+                                            {/* TIPS VIEW */}
+                                            {coachData.action === 'tips' && coachData.tips && (
+                                                <div>
+                                                    {coachData.overall_assessment && (
+                                                        <div className="coach-assessment">
+                                                            {coachData.overall_assessment}
+                                                        </div>
+                                                    )}
+                                                    <div className="coach-tips-list">
+                                                        {coachData.tips.map((tip, i) => (
+                                                            <div key={i} className={`coach-tip-card priority-${tip.priority || 'medium'}`}>
+                                                                <div className="tip-header">
+                                                                    <span className={`tip-priority ${tip.priority || 'medium'}`}>
+                                                                        {tip.priority === 'high' ? '🔴' : tip.priority === 'low' ? '🟢' : '🟡'} {(tip.priority || 'medium').toUpperCase()}
+                                                                    </span>
+                                                                    <strong>{tip.title}</strong>
+                                                                </div>
+                                                                <p className="tip-detail">{tip.detail}</p>
+                                                            </div>
+                                                        ))}
+                                                    </div>
+                                                    {coachData.estimated_score_after_fixes && (
+                                                        <div className="coach-score-boost">
+                                                            📈 Estimated score after fixes: <strong>{coachData.estimated_score_after_fixes}/100</strong>
+                                                        </div>
+                                                    )}
+                                                </div>
+                                            )}
+
+                                            {/* COVER LETTER VIEW */}
+                                            {coachData.action === 'cover_letter' && coachData.cover_letter && (
+                                                <div>
+                                                    <div className="coach-cover-letter">
+                                                        {coachData.cover_letter.split('\n').map((line, i) => (
+                                                            <p key={i}>{line}</p>
+                                                        ))}
+                                                    </div>
+                                                    {coachData.key_highlights && (
+                                                        <div className="coach-highlights">
+                                                            <strong>Key Highlights Used:</strong>
+                                                            <ul>
+                                                                {coachData.key_highlights.map((h, i) => <li key={i}>{h}</li>)}
+                                                            </ul>
+                                                        </div>
+                                                    )}
+                                                    <button 
+                                                        className="coach-copy-btn"
+                                                        onClick={() => {
+                                                            navigator.clipboard.writeText(coachData.cover_letter);
+                                                            alert('Cover letter copied to clipboard!');
+                                                        }}
+                                                    >
+                                                        📋 Copy to Clipboard
+                                                    </button>
+                                                </div>
+                                            )}
+
+                                            {/* INTERVIEW PREP VIEW */}
+                                            {coachData.action === 'interview_prep' && coachData.questions && (
+                                                <div className="coach-interview-list">
+                                                    {coachData.questions.map((q, i) => (
+                                                        <div key={i} className={`coach-question-card category-${q.category || 'behavioral'}`}>
+                                                            <div className="question-category">
+                                                                {q.category === 'strength' ? '💪' : q.category === 'gap' ? '⚠️' : '🧠'} {(q.category || 'general').toUpperCase()}
+                                                            </div>
+                                                            <div className="question-text">{q.question}</div>
+                                                            <div className="question-tip">💡 Tip: {q.tip}</div>
+                                                        </div>
+                                                    ))}
+                                                </div>
+                                            )}
+                                        </div>
+                                    )}
+
+                                    {/* Initial State (no data yet) */}
+                                    {!coachData && !coachLoading && !coachError && (
+                                        <div className="coach-empty">
+                                            Click any tab above to get AI-powered career coaching for this job.
+                                        </div>
+                                    )}
                                 </div>
                             </div>
                         ) : (

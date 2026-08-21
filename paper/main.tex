@@ -139,7 +139,14 @@ Features are fed into an ensemble of tuned XGBoost, LightGBM, and CatBoost regre
 \section{Experimental Setup}
 
 \subsection{Evaluation Metrics}
-    \item \textbf{nDCG@10}: Evaluates ranking quality for recommendation.
+We evaluate regression accuracy, classification tier calibration, and recommendation ranking quality:
+\begin{itemize}
+    \item \textbf{Mean Absolute Error (MAE)}: Measures the average magnitude of absolute errors in ATS score prediction.
+    \item \textbf{Root Mean Squared Error (RMSE)}: Penalizes large outlier errors to ensure model stability.
+    \item \textbf{Coefficient of Determination ($R^2$)}: Quantifies the proportion of score variance explained by the model.
+    \item \textbf{Shortlist Precision@Top25\%}: Measures the fraction of correctly identified top candidates for shortlist interview calls.
+    \item \textbf{F1-Score}: Evaluates class balance across fit tiers (\textit{No Fit}, \textit{Potential Fit}, \textit{Good Fit}).
+    \item \textbf{nDCG@10}: Evaluates ranking quality and ranking position discount for top-10 recommended candidates.
 \end{itemize}
 
 \subsection{Validation Strategy}
@@ -233,7 +240,7 @@ Unlike black-box models, our system provides actionable feedback: matched skills
 
 We presented a hybrid NLP-based resume--job matching system that combines semantic similarity from Sentence-BERT, skill-overlap extraction from a curated dictionary, and structured text features, fused through an XGBoost meta-learner. The hybrid model outperforms three baselines on the Resume-ATS Score Dataset, demonstrating that multi-signal fusion is superior to single-signal approaches for resume--job matching.
 
-The deployed Gradio application provides explainable, actionable output, showing matched and missing skills alongside an ATS compatibility score.
+The deployed FastAPI asynchronous microservice and interactive React web application provide explainable, actionable output, showing matched and missing skills alongside an ATS compatibility score and generative AI career coaching.
 
 Future work directions include:
 \begin{itemize}

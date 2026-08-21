@@ -225,18 +225,37 @@ class AltureMatcherService:
             jd_word_count=jd_len
         )
 
-    def match_against_jobs_list(self, resume_text: str, jobs: List[JobPosting]) -> List[RankedJobMatch]:
+    def match_against_jobs_list(self, resume_text: str, jobs: List[Any]) -> List[RankedJobMatch]:
         results = []
         for job in jobs:
-            match_res = self.analyze_match(resume_text, job.jd_text)
+            if isinstance(job, dict):
+                job_id = str(job.get("job_id", "job_0"))
+                title = job.get("title", "Software Engineer")
+                company = job.get("company", "Tech Company")
+                location = job.get("location", "Pakistan")
+                jtype = job.get("type", "Full Time")
+                salary = job.get("salary_range")
+                apply_url = job.get("apply_url")
+                jd_text = job.get("description") or job.get("jd_text", f"{title} at {company}")
+            else:
+                job_id = str(getattr(job, "id", "job_0"))
+                title = getattr(job, "title", "Software Engineer")
+                company = getattr(job, "company", "Tech Company")
+                location = getattr(job, "location", "Pakistan")
+                jtype = getattr(job, "type", "Full Time")
+                salary = getattr(job, "salary_range", None)
+                apply_url = getattr(job, "apply_url", None)
+                jd_text = getattr(job, "jd_text", f"{title} at {company}")
+
+            match_res = self.analyze_match(resume_text, jd_text)
             results.append(RankedJobMatch(
-                job_id=job.id,
-                title=job.title,
-                company=job.company,
-                location=job.location,
-                type=job.type,
-                salary_range=job.salary_range,
-                apply_url=job.apply_url,
+                job_id=job_id,
+                title=title,
+                company=company,
+                location=location,
+                type=jtype,
+                salary_range=salary,
+                apply_url=apply_url,
                 ats_score=match_res.ats_score,
                 fit_tier=match_res.fit_tier,
                 matched_skills_count=len(match_res.skill_analysis.matched_skills),

@@ -857,3 +857,332 @@ body {
     font-weight: 600;
     margin-bottom: 1.25rem;
 }
+
+/* =============================================================
+   GEMINI AI CAREER COACH PANEL
+   ============================================================= */
+.coach-panel {
+    margin-top: 1.5rem;
+    background: linear-gradient(135deg, #f8fafc 0%, #eff6ff 100%);
+    border: 1px solid #bfdbfe;
+    border-radius: var(--radius-md);
+    padding: 1.25rem;
+    position: relative;
+    overflow: hidden;
+}
+
+.coach-panel::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 3px;
+    background: linear-gradient(90deg, #4285f4, #ea4335, #fbbc05, #34a853);
+}
+
+.coach-header {
+    margin-bottom: 1rem;
+}
+
+.coach-badge {
+    font-size: 0.7rem;
+    font-weight: 800;
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    color: #4285f4;
+    background: #e8f0fe;
+    padding: 3px 10px;
+    border-radius: var(--radius-pill);
+    border: 1px solid #c2d9fc;
+}
+
+.coach-title {
+    font-size: 1.15rem;
+    font-weight: 800;
+    color: var(--text-main);
+    margin-top: 8px;
+}
+
+/* Coach Tabs */
+.coach-tabs {
+    display: flex;
+    gap: 6px;
+    margin-bottom: 1rem;
+    flex-wrap: wrap;
+}
+
+.coach-tab {
+    padding: 8px 16px;
+    font-size: 0.82rem;
+    font-weight: 700;
+    border: 1px solid #cbd5e1;
+    border-radius: var(--radius-sm);
+    background: #ffffff;
+    color: #475569;
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.coach-tab:hover:not(:disabled) {
+    background: #f0f9ff;
+    border-color: #0284c7;
+    color: #0284c7;
+}
+
+.coach-tab.active {
+    background: #0284c7;
+    color: #ffffff;
+    border-color: #0284c7;
+}
+
+.coach-tab:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+}
+
+/* Loading Spinner */
+.coach-loading {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 1.5rem;
+    justify-content: center;
+    color: #0284c7;
+    font-size: 0.88rem;
+    font-weight: 600;
+}
+
+.coach-spinner {
+    width: 24px;
+    height: 24px;
+    border: 3px solid #e0f2fe;
+    border-top: 3px solid #0284c7;
+    border-radius: 50%;
+    animation: spin 0.8s linear infinite;
+}
+
+@keyframes spin {
+    to { transform: rotate(360deg); }
+}
+
+/* Error */
+.coach-error {
+    padding: 10px 14px;
+    background: #fef2f2;
+    border: 1px solid #fecaca;
+    color: #991b1b;
+    border-radius: var(--radius-sm);
+    font-size: 0.82rem;
+    font-weight: 600;
+}
+
+/* Results Container */
+.coach-results {
+    animation: fadeIn 0.3s ease;
+}
+
+@keyframes fadeIn {
+    from { opacity: 0; transform: translateY(8px); }
+    to { opacity: 1; transform: translateY(0); }
+}
+
+.coach-powered-by {
+    font-size: 0.72rem;
+    font-weight: 700;
+    color: #64748b;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+    margin-bottom: 0.75rem;
+    padding: 3px 8px;
+    background: #f1f5f9;
+    border-radius: 4px;
+    display: inline-block;
+}
+
+/* Assessment */
+.coach-assessment {
+    padding: 10px 14px;
+    background: #f0fdf4;
+    border: 1px solid #bbf7d0;
+    border-radius: var(--radius-sm);
+    color: #166534;
+    font-size: 0.85rem;
+    font-weight: 600;
+    margin-bottom: 1rem;
+    line-height: 1.5;
+}
+
+/* Tips Cards */
+.coach-tips-list {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+.coach-tip-card {
+    padding: 12px 14px;
+    background: #ffffff;
+    border: 1px solid #e2e8f0;
+    border-radius: var(--radius-sm);
+    border-left: 4px solid #94a3b8;
+    transition: box-shadow 0.15s ease;
+}
+
+.coach-tip-card:hover {
+    box-shadow: 0 2px 8px rgba(0,0,0,0.06);
+}
+
+.coach-tip-card.priority-high { border-left-color: #ef4444; }
+.coach-tip-card.priority-medium { border-left-color: #f59e0b; }
+.coach-tip-card.priority-low { border-left-color: #22c55e; }
+
+.tip-header {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin-bottom: 6px;
+    flex-wrap: wrap;
+}
+
+.tip-header strong {
+    font-size: 0.88rem;
+    color: var(--text-main);
+}
+
+.tip-priority {
+    font-size: 0.68rem;
+    font-weight: 800;
+    padding: 2px 6px;
+    border-radius: 3px;
+    text-transform: uppercase;
+}
+
+.tip-priority.high { background: #fef2f2; color: #991b1b; }
+.tip-priority.medium { background: #fffbeb; color: #92400e; }
+.tip-priority.low { background: #f0fdf4; color: #166534; }
+
+.tip-detail {
+    font-size: 0.82rem;
+    color: #475569;
+    line-height: 1.55;
+    margin: 0;
+}
+
+.coach-score-boost {
+    margin-top: 1rem;
+    padding: 10px 14px;
+    background: #eff6ff;
+    border: 1px solid #bfdbfe;
+    border-radius: var(--radius-sm);
+    font-size: 0.85rem;
+    color: #1e40af;
+    font-weight: 600;
+}
+
+/* Cover Letter */
+.coach-cover-letter {
+    padding: 1.25rem;
+    background: #ffffff;
+    border: 1px solid #e2e8f0;
+    border-radius: var(--radius-sm);
+    font-size: 0.88rem;
+    color: #334155;
+    line-height: 1.7;
+    margin-bottom: 0.75rem;
+    font-family: 'Georgia', serif;
+    white-space: pre-wrap;
+}
+
+.coach-cover-letter p {
+    margin-bottom: 0.75rem;
+}
+
+.coach-highlights {
+    padding: 10px 14px;
+    background: #f8fafc;
+    border: 1px solid #e2e8f0;
+    border-radius: var(--radius-sm);
+    margin-bottom: 0.75rem;
+    font-size: 0.82rem;
+}
+
+.coach-highlights ul {
+    margin: 6px 0 0 18px;
+    padding: 0;
+}
+
+.coach-highlights li {
+    margin-bottom: 3px;
+    color: #475569;
+}
+
+.coach-copy-btn {
+    padding: 8px 16px;
+    font-size: 0.82rem;
+    font-weight: 700;
+    background: #0284c7;
+    color: #ffffff;
+    border: none;
+    border-radius: var(--radius-sm);
+    cursor: pointer;
+    transition: background 0.15s ease;
+}
+
+.coach-copy-btn:hover {
+    background: #0369a1;
+}
+
+/* Interview Questions */
+.coach-interview-list {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+}
+
+.coach-question-card {
+    padding: 12px 14px;
+    background: #ffffff;
+    border: 1px solid #e2e8f0;
+    border-radius: var(--radius-sm);
+    border-left: 4px solid #94a3b8;
+}
+
+.coach-question-card.category-strength { border-left-color: #22c55e; }
+.coach-question-card.category-gap { border-left-color: #f59e0b; }
+.coach-question-card.category-behavioral { border-left-color: #6366f1; }
+
+.question-category {
+    font-size: 0.68rem;
+    font-weight: 800;
+    text-transform: uppercase;
+    color: #64748b;
+    margin-bottom: 6px;
+    letter-spacing: 0.04em;
+}
+
+.question-text {
+    font-size: 0.9rem;
+    font-weight: 700;
+    color: var(--text-main);
+    margin-bottom: 6px;
+    line-height: 1.4;
+}
+
+.question-tip {
+    font-size: 0.78rem;
+    color: #0369a1;
+    background: #f0f9ff;
+    padding: 6px 10px;
+    border-radius: 4px;
+    line-height: 1.4;
+}
+
+/* Empty State */
+.coach-empty {
+    text-align: center;
+    padding: 1.5rem;
+    color: #94a3b8;
+    font-size: 0.88rem;
+    font-style: italic;
+}

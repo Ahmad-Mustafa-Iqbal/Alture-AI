@@ -8,11 +8,13 @@ from fastapi.responses import FileResponse
 from .schemas import (
     SingleMatchRequest, SingleMatchResponse,
     BatchMatchRequest, BatchMatchResponse,
-    LiveJobSearchRequest, SampleDataResponse
+    LiveJobSearchRequest, SampleDataResponse,
+    AICoachRequest, AICoachResponse
 )
 from .matcher_service import matcher_service
 from .sample_data import SAMPLE_PERSONAS, SAMPLE_JOBS
 from .resume_parser import parse_resume_file
+from .gemini_coach_service import coach_service
 
 app = FastAPI(
     title="Alture AI — Global Job Intelligence & Explainable ATS Engine",
@@ -147,6 +149,52 @@ async def search_and_match_jobs(request: LiveJobSearchRequest):
         )
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Error searching and matching jobs: {str(e)}")
+
+@app.post("/api/v1/ai-coach", response_model=AICoachResponse, tags=["AI Career Coach"])
+async def ai_career_coach(request: AICoachRequest):
+    """
+    Gemini-powered AI Career Coach providing:
+    - 'tips': Resume improvement suggestions based on skill gaps
+    - 'cover_letter': Tailored cover letter generation
+    - 'interview_prep': Interview preparation questions
+    """
+    try:
+        if request.action == "tips":
+            result = coach_service.get_resume_tips(
+                resume_text=request.resume_text,
+                job_title=request.job_title,
+                job_description=request.job_description,
+                matched_skills=request.matched_skills,
+                missing_skills=request.missing_skills,
+                ats_score=request.ats_score
+            )
+        elif request.action == "cover_letter":
+            result = coach_service.generate_cover_letter(
+                resume_text=request.resume_text,
+                job_title=request.job_title,
+                company=request.company,
+                job_description=request.job_description
+            )
+        elif request.action == "interview_prep":
+            result = coach_service.generate_interview_questions(
+                job_title=request.job_title,
+                job_description=request.job_description,
+                missing_skills=request.missing_skills,
+                matched_skills=request.matched_skills
+            )
+        else:
+            raise HTTPException(status_code=400, detail=f"Unknown action: {request.action}. Use 'tips', 'cover_letter', or 'interview_prep'.")
+
+        return AICoachResponse(
+            status="success",
+            action=request.action,
+            powered_by=result.get("powered_by", "gemini-2.0-flash"),
+            data=result
+        )
+    except HTTPException:
+        raise
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"AI Coach error: {str(e)}")
 
 # ----------------------------------------------------
 # SERVE FRONTEND STATIC FILES

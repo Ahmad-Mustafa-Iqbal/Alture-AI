@@ -87,3 +87,20 @@ class SamplePersona(BaseModel):
 class SampleDataResponse(BaseModel):
     personas: List[SamplePersona]
     jobs: List[JobPosting]
+
+# ─── AI Coach Schemas ───
+class AICoachRequest(BaseModel):
+    resume_text: str = Field(..., min_length=20, description="Candidate resume text")
+    job_title: str = Field("Software Engineer", description="Target job title")
+    job_description: str = Field("", description="Job description text")
+    company: str = Field("", description="Company name")
+    matched_skills: List[str] = Field(default_factory=list)
+    missing_skills: List[str] = Field(default_factory=list)
+    ats_score: float = Field(0.0, description="Current ATS score")
+    action: str = Field("tips", description="'tips' | 'cover_letter' | 'interview_prep'")
+
+class AICoachResponse(BaseModel):
+    status: str = "success"
+    action: str
+    powered_by: str = "gemini-2.0-flash"
+    data: Dict[str, Any]
