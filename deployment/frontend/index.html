@@ -23,9 +23,9 @@
     
     <!-- Backend API Base URL Configuration -->
     <script>
-        window.API_BASE_URL = window.location.hostname.includes("vercel.app") 
-            ? "https://mozi1223-alture-ai.hf.space" 
-            : "";
+        window.API_BASE_URL = (window.location.hostname === "localhost" || window.location.hostname === "127.0.0.1") 
+            ? "" 
+            : "https://mozi1223-alture-ai.hf.space";
     </script>
     
     <!-- Custom CSS -->

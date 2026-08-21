@@ -43,7 +43,7 @@ original_create_app = gr.routes.App.create_app
 def custom_create_app(*args, **kwargs):
     app = original_create_app(*args, **kwargs)
     
-    # Configure CORS on Gradio's app
+    # Configure CORS & Preflight Handling on Gradio's app for Vercel connection
     app.add_middleware(
         CORSMiddleware,
         allow_origins=["*"],
@@ -51,6 +51,24 @@ def custom_create_app(*args, **kwargs):
         allow_methods=["*"],
         allow_headers=["*"],
     )
+
+    @app.middleware("http")
+    async def cors_preflight_middleware(request, call_next):
+        if request.method == "OPTIONS":
+            from fastapi.responses import Response
+            return Response(
+                status_code=200,
+                headers={
+                    "Access-Control-Allow-Origin": "*",
+                    "Access-Control-Allow-Methods": "*",
+                    "Access-Control-Allow-Headers": "*",
+                }
+            )
+        response = await call_next(request)
+        response.headers["Access-Control-Allow-Origin"] = "*"
+        response.headers["Access-Control-Allow-Methods"] = "*"
+        response.headers["Access-Control-Allow-Headers"] = "*"
+        return response
     
     # Mount frontend static files
     frontend_dir = os.path.join(os.path.dirname(os.path.abspath(__file__)), "deployment", "frontend")
