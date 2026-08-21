@@ -250,27 +250,8 @@ function App() {
                         </div>
                     </section>
 
-                    {/* Quick Filter Pills Bar */}
-                    <div className="filter-bar-container">
-                        <button className={`filter-pill ${activeFilter === 'pk' ? 'active' : ''}`} onClick={() => { setActiveFilter('pk'); setSearchLocation("Pakistan"); fetchJobsAndMatch(resumeText, searchQuery, "Pakistan"); }}>
-                            🇵🇰 All Pakistan (Lahore, Karachi, Islamabad)
-                        </button>
-                        <button className={`filter-pill ${activeFilter === 'lahore' ? 'active' : ''}`} onClick={() => { setActiveFilter('lahore'); setSearchLocation("Lahore"); fetchJobsAndMatch(resumeText, searchQuery, "Lahore"); }}>
-                            📍 Lahore Tech Hub
-                        </button>
-                        <button className={`filter-pill ${activeFilter === 'karachi' ? 'active' : ''}`} onClick={() => { setActiveFilter('karachi'); setSearchLocation("Karachi"); fetchJobsAndMatch(resumeText, searchQuery, "Karachi"); }}>
-                            📍 Karachi Tech Hub
-                        </button>
-                        <button className={`filter-pill ${activeFilter === 'remote' ? 'active' : ''}`} onClick={() => { setActiveFilter('remote'); setSearchLocation("Remote"); fetchJobsAndMatch(resumeText, searchQuery, "Remote"); }}>
-                            🌍 Worldwide Remote
-                        </button>
-                        <span style={{ marginLeft: 'auto', fontSize: '0.78rem', fontFamily: 'var(--font-mono)', padding: '4px 10px', background: '#e0f2fe', color: '#0369a1', border: '1px solid #bae6fd', borderRadius: '6px', fontWeight: 'bold' }}>
-                            📡 {providerUsed}
-                        </span>
-                    </div>
-
                     {/* Main 2-Column Job Split Board */}
-                    <main className="main-layout">
+                    <main className="main-layout" style={{ marginTop: '2.5rem' }}>
                         {/* Left Feed */}
                         <div className="jobs-feed-column">
                             <div className="feed-header">
