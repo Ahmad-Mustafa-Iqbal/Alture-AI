@@ -167,6 +167,11 @@ function App() {
             {/* 1. TOP PROFILE NAVBAR */}
             <nav className="top-profile-bar">
                 <div className="profile-info">
+                    <div className="brand-logo-wrapper">
+                        <img src="/static/logo.png" alt="Alture AI" className="header-brand-logo" onError={(e) => { e.target.style.display = 'none'; }} />
+                        <span className="brand-name-tag">Alture</span>
+                    </div>
+
                     <div className="profile-avatar">
                         {userName.split(' ').map(n => n[0]).join('').substring(0, 2)}
                     </div>

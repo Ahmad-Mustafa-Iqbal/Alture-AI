@@ -80,7 +80,29 @@ body {
 .profile-info {
     display: flex;
     align-items: center;
-    gap: 0.85rem;
+    gap: 1.25rem;
+}
+
+.brand-logo-wrapper {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding-right: 1rem;
+    border-right: 1px solid var(--border-subtle);
+}
+
+.header-brand-logo {
+    height: 38px;
+    width: auto;
+    object-fit: contain;
+    border-radius: 6px;
+}
+
+.brand-name-tag {
+    font-weight: 800;
+    font-size: 1.15rem;
+    letter-spacing: -0.03em;
+    color: #0f172a;
 }
 
 .profile-avatar {
