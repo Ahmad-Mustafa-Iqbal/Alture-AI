@@ -61,7 +61,8 @@ function App() {
 
     // Load initial data
     useEffect(() => {
-        fetch("/api/v1/sample-data")
+        const API_BASE = window.API_BASE_URL || "";
+        fetch(`${API_BASE}/api/v1/sample-data`)
             .then(res => res.json())
             .then(data => {
                 setSampleData(data);
@@ -82,7 +83,8 @@ function App() {
         setLoading(true);
         setErrorMsg("");
         try {
-            const res = await fetch("/api/v1/search-and-match-jobs", {
+            const API_BASE = window.API_BASE_URL || "";
+            const res = await fetch(`${API_BASE}/api/v1/search-and-match-jobs`, {
                 method: "POST",
                 headers: { "Content-Type": "application/json" },
                 body: JSON.stringify({
@@ -119,7 +121,8 @@ function App() {
         formData.append("file", file);
 
         try {
-            const res = await fetch("/api/v1/upload-resume", {
+            const API_BASE = window.API_BASE_URL || "";
+            const res = await fetch(`${API_BASE}/api/v1/upload-resume`, {
                 method: "POST",
                 body: formData
             });
@@ -173,7 +176,8 @@ function App() {
         setCoachError("");
         setCoachTab(action);
         try {
-            const res = await fetch("/api/v1/ai-coach", {
+            const API_BASE = window.API_BASE_URL || "";
+            const res = await fetch(`${API_BASE}/api/v1/ai-coach`, {
                 method: "POST",
                 headers: { "Content-Type": "application/json" },
                 body: JSON.stringify({
@@ -205,7 +209,8 @@ function App() {
         if (!selectedJob) return;
         setPdfDownloading(true);
         try {
-            const res = await fetch("/api/v1/download-ats-report", {
+            const API_BASE = window.API_BASE_URL || "";
+            const res = await fetch(`${API_BASE}/api/v1/download-ats-report`, {
                 method: "POST",
                 headers: { "Content-Type": "application/json" },
                 body: JSON.stringify({

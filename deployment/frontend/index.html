@@ -21,6 +21,13 @@
     <!-- Babel Standalone for JSX -->
     <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
     
+    <!-- Backend API Base URL Configuration -->
+    <script>
+        window.API_BASE_URL = window.location.hostname.includes("vercel.app") 
+            ? "https://mozi1223-alture-ai.hf.space" 
+            : "";
+    </script>
+    
     <!-- Custom CSS -->
     <link rel="stylesheet" href="/static/styles.css">
 </head>

@@ -1,0 +1,20 @@
+{
+  "version": 2,
+  "name": "alture-ai-frontend",
+  "builds": [
+    {
+      "src": "deployment/frontend/**",
+      "use": "@vercel/static"
+    }
+  ],
+  "routes": [
+    {
+      "src": "/static/(.*)",
+      "dest": "/deployment/frontend/$1"
+    },
+    {
+      "src": "/(.*)",
+      "dest": "/deployment/frontend/index.html"
+    }
+  ]
+}
