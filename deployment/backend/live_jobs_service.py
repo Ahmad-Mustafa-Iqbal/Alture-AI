@@ -18,7 +18,7 @@ def clean_html(raw_html: str) -> str:
     clean = re.sub(r'\s+', ' ', clean)
     return clean.strip()
 
-# Verified Pakistan Tech Hubs (Systems Ltd, Arbisoft, 10Pearls, VentureDive, Devsinc)
+# Verified Pakistan Tech Hubs (Systems Ltd, Arbisoft, 10Pearls, VentureDive, Devsinc, NetSol, Contour)
 PAKISTAN_TECH_JOBS: List[Dict[str, Any]] = [
     {
         "job_id": "pk_sys_01",
@@ -42,23 +42,23 @@ PAKISTAN_TECH_JOBS: List[Dict[str, Any]] = [
     },
     {
         "job_id": "pk_10p_03",
-        "title": "Senior NLP & Data Scientist",
+        "title": "Senior React / Frontend Developer",
         "company": "10Pearls",
         "location": "Karachi / Islamabad, Pakistan",
         "type": "Full Time",
-        "salary_range": "PKR 400,000 - 650,000 / month",
+        "salary_range": "PKR 350,000 - 550,000 / month",
         "apply_url": "https://10pearls.com/careers",
-        "description": "10Pearls is looking for a Senior NLP Data Scientist with expertise in Large Language Models (LLMs), Sentence-BERT, fine-tuning Hugging Face architectures, and building production search engines. Requirements: Python, PyTorch, Scikit-Learn, LangChain, vector indexing, and Docker."
+        "description": "10Pearls is looking for a Senior Frontend Developer with expertise in React, TypeScript, Next.js, Redux Toolkit, Tailwind CSS, and Webpack. Requirements: 4+ years frontend web development, responsive design, REST/GraphQL integration, and UI/UX optimization."
     },
     {
         "job_id": "pk_vd_04",
-        "title": "Senior Data Platform Engineer",
+        "title": "Full Stack Software Engineer (MERN / Python)",
         "company": "VentureDive",
         "location": "Lahore / Karachi, Pakistan",
         "type": "Full Time",
-        "salary_range": "PKR 450,000 - 700,000 / month",
+        "salary_range": "PKR 400,000 - 650,000 / month",
         "apply_url": "https://venturedive.com/careers",
-        "description": "VentureDive requires a Data Platform Engineer to design real-time event-streaming pipelines. Requirements: Python, Apache Spark, Kafka, SQL, Docker, Snowflake, and AWS/GCP data pipelines. Experience with data modeling and CI/CD."
+        "description": "VentureDive requires a Full Stack Software Engineer to build end-to-end web applications. Requirements: React, Node.js, Express, Python, PostgreSQL, MongoDB, Docker, REST APIs, and AWS cloud deployment. Strong problem-solving and Agile teamwork."
     },
     {
         "job_id": "pk_dev_05",
@@ -69,6 +69,36 @@ PAKISTAN_TECH_JOBS: List[Dict[str, Any]] = [
         "salary_range": "PKR 400,000 - 650,000 / month",
         "apply_url": "https://www.devsinc.com/careers",
         "description": "Devsinc is hiring a Cloud DevOps Engineer to manage Kubernetes clusters, Terraform infrastructure, and automated CI/CD pipelines on AWS. Requirements: Linux, Docker, Kubernetes, Terraform, Prometheus, and GitHub Actions."
+    },
+    {
+        "job_id": "pk_netsol_06",
+        "title": "Data Scientist / NLP Specialist",
+        "company": "NetSol Technologies",
+        "location": "Lahore, Pakistan",
+        "type": "Full Time",
+        "salary_range": "PKR 400,000 - 600,000 / month",
+        "apply_url": "https://netsoltech.com/careers",
+        "description": "NetSol Technologies is hiring a Data Scientist to develop statistical modeling and NLP text analytics engines. Requirements: Python, Scikit-Learn, Pandas, NumPy, NLP, SQL, Tableau, and machine learning model validation."
+    },
+    {
+        "job_id": "pk_contour_07",
+        "title": "Senior Data Analyst (BI & SQL)",
+        "company": "Contour Software",
+        "location": "Islamabad / Karachi, Pakistan",
+        "type": "Full Time",
+        "salary_range": "PKR 300,000 - 500,000 / month",
+        "apply_url": "https://contour-software.com/careers",
+        "description": "Contour Software is seeking a Data Analyst to translate raw enterprise data into actionable executive insights. Requirements: Advanced SQL, Power BI, Tableau, Excel modeling, Python data analysis, and dashboard design."
+    },
+    {
+        "job_id": "pk_curemd_08",
+        "title": "Human Resources & Talent Acquisition Specialist",
+        "company": "CureMD Healthcare",
+        "location": "Lahore, Pakistan",
+        "type": "Full Time",
+        "salary_range": "PKR 200,000 - 350,000 / month",
+        "apply_url": "https://www.curemd.com/careers",
+        "description": "CureMD is looking for an HR Specialist to manage end-to-end recruitment pipelines, talent acquisition, applicant screening, interview coordination, and onboarding protocols. Requirements: 3+ years tech hiring, ATS platforms, LinkedIn Recruiter, and employee relations."
     }
 ]
 

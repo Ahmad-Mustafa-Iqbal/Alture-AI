@@ -135,8 +135,11 @@ function App() {
                 if (data.candidate_name && data.candidate_name !== "Candidate") {
                     setUserName(data.candidate_name);
                 }
+                const detectedRole = data.detected_role || "Software Engineer";
+                setUserRole(detectedRole);
+                setSearchQuery(detectedRole);
                 setShowTextPaste(false);
-                fetchJobsAndMatch(data.extracted_text, searchQuery, searchLocation);
+                fetchJobsAndMatch(data.extracted_text, detectedRole, searchLocation);
             } else {
                 setErrorMsg(data.detail || "Failed to parse uploaded resume document.");
             }
@@ -163,10 +166,11 @@ function App() {
         setResumeText(persona.resume_text);
         setUserName(persona.name);
         setUserRole(persona.title);
+        setSearchQuery(persona.title);
         setUploadedFileName("");
         setUploadedWordCount(persona.resume_text.split(/\s+/).filter(Boolean).length);
         setCoachData(null);
-        fetchJobsAndMatch(persona.resume_text, searchQuery, searchLocation);
+        fetchJobsAndMatch(persona.resume_text, persona.title, searchLocation);
     };
 
     // AI Coach Handler
@@ -524,14 +528,16 @@ function App() {
                         {/* Active Resume Status Banner */}
                         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '10px 14px', background: '#ecfdf5', border: '1px solid #a7f3d0', borderRadius: '8px', marginBottom: '1rem', flexWrap: 'wrap', gap: '6px' }}>
                             <span style={{ fontSize: '0.85rem', color: '#065f46', fontWeight: '600' }}>
-                                ✓ Active Candidate: <strong>{userName}</strong> • Document: <strong>{uploadedFileName || "Default Candidate Profile"}</strong> ({uploadedWordCount} words parsed)
+                                ✓ Active Candidate: <strong>{userName}</strong> <span style={{ background: '#047857', color: '#fff', padding: '2px 8px', borderRadius: '12px', fontSize: '0.75rem', marginLeft: '6px' }}>🎯 {userRole}</span> • Document: <strong>{uploadedFileName || "Default Candidate Profile"}</strong> ({uploadedWordCount} words parsed)
                             </span>
-                            <button 
-                                style={{ padding: '4px 10px', fontSize: '0.76rem', fontWeight: '700', background: '#047857', color: '#ffffff', border: 'none', borderRadius: '4px', cursor: 'pointer' }}
-                                onClick={() => fileInputRef.current && fileInputRef.current.click()}
-                            >
-                                ↻ Upload Different Resume
-                            </button>
+                            <div style={{ display: 'flex', gap: '6px' }}>
+                                <button 
+                                    style={{ padding: '4px 10px', fontSize: '0.76rem', fontWeight: '700', background: '#047857', color: '#ffffff', border: 'none', borderRadius: '4px', cursor: 'pointer' }}
+                                    onClick={() => fileInputRef.current && fileInputRef.current.click()}
+                                >
+                                    ↻ Upload Resume
+                                </button>
+                            </div>
                         </div>
 
                         {/* Raw Text Paste Drawer */}
