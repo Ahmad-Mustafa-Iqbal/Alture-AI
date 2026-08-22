@@ -1,14 +1,8 @@
-"""
-Alture AI — Backend Main FastAPI Application
-===================================================
-Production REST API server powering hybrid NLP search, ATS matching, Gemini coaching, and PDF reports.
-"""
-
+import os
 from fastapi import FastAPI, HTTPException, UploadFile, File, APIRouter
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.staticfiles import StaticFiles
 from fastapi.responses import FileResponse, Response
-import os
 
 from .schemas import (
     SingleMatchRequest, SingleMatchResponse,
@@ -24,14 +18,12 @@ from .gemini_coach_service import coach_service
 from .pdf_report_service import generate_ats_audit_pdf
 
 app = FastAPI(
-    title="Alture AI — Global Job Intelligence & Explainable ATS Engine",
-    description="Production REST API powering hybrid semantic matching, 500+ skill ontology extraction, and ATS compatibility scoring.",
+    title="Alture AI Backend",
     version="2.0.0",
     docs_url="/docs",
     redoc_url="/redoc"
 )
 
-# Enable CORS for local development and Vercel cross-origin deployment
 app.add_middleware(
     CORSMiddleware,
     allow_origins=["*"],
@@ -57,21 +49,17 @@ async def cors_preflight_middleware(request, call_next):
     response.headers["Access-Control-Allow-Headers"] = "*"
     return response
 
-@app.get("/health", tags=["Health & System"])
+@app.get("/health")
 async def health_check():
-    """Health check endpoint to verify backend operational readiness."""
     return {
         "status": "healthy",
-        "engine": "SentenceTransformer all-MiniLM-L6-v2 + XGBoost Tuned Classifier",
+        "engine": "SentenceTransformer + XGBoost",
         "version": "2.0.0"
     }
 
-# ----------------------------------------------------
-# API ROUTER (Dual Mounted at /v1 and /api/v1)
-# ----------------------------------------------------
 router = APIRouter()
 
-@router.post("/upload-resume", tags=["Resume Processing"])
+@router.post("/upload-resume")
 async def upload_resume(file: UploadFile = File(...)):
     try:
         contents = await file.read()
@@ -80,20 +68,20 @@ async def upload_resume(file: UploadFile = File(...)):
         
         parsed_result = parse_resume_file(filename=file.filename, file_bytes=contents)
         if parsed_result["word_count"] < 10:
-            raise HTTPException(status_code=400, detail="Could not extract readable text from document.")
+            raise HTTPException(status_code=400, detail="Could not extract text from document.")
             
         return parsed_result
     except Exception as e:
-        raise HTTPException(status_code=500, detail=f"Error parsing resume file: {str(e)}")
+        raise HTTPException(status_code=500, detail=f"Error parsing resume: {str(e)}")
 
-@router.get("/sample-data", response_model=SampleDataResponse, tags=["Sample Data"])
+@router.get("/sample-data", response_model=SampleDataResponse)
 async def get_sample_data():
     return SampleDataResponse(
         personas=SAMPLE_PERSONAS,
         jobs=SAMPLE_JOBS
     )
 
-@router.post("/analyze", response_model=SingleMatchResponse, tags=["ATS Matching"])
+@router.post("/analyze", response_model=SingleMatchResponse)
 async def analyze_single_match(request: SingleMatchRequest):
     try:
         match_result = matcher_service.analyze_match(
@@ -108,7 +96,7 @@ async def analyze_single_match(request: SingleMatchRequest):
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Inference error during matching: {str(e)}")
 
-@router.post("/match-jobs", response_model=BatchMatchResponse, tags=["Global Job Discovery"])
+@router.post("/match-jobs", response_model=BatchMatchResponse)
 async def match_against_jobs(request: BatchMatchRequest):
     try:
         ranked_results = matcher_service.match_against_global_jobs(
@@ -121,15 +109,15 @@ async def match_against_jobs(request: BatchMatchRequest):
             ranked_jobs=ranked_results
         )
     except Exception as e:
-        raise HTTPException(status_code=500, detail=f"Error ranking global jobs: {str(e)}")
+        raise HTTPException(status_code=500, detail=f"Error ranking jobs: {str(e)}")
 
-@router.get("/jobs/live", tags=["Live Job Stream"])
+@router.get("/jobs/live")
 async def get_live_jobs(limit: int = 15):
     from .live_jobs_service import fetch_live_global_jobs
     live_jobs = fetch_live_global_jobs(limit=limit)
     return {"status": "success", "count": len(live_jobs), "jobs": live_jobs}
 
-@router.post("/search-and-match-jobs", response_model=BatchMatchResponse, tags=["Live Job Stream"])
+@router.post("/search-and-match-jobs", response_model=BatchMatchResponse)
 async def search_and_match_jobs(request: LiveJobSearchRequest):
     from .live_jobs_service import fetch_multi_source_jobs
     try:
@@ -153,9 +141,9 @@ async def search_and_match_jobs(request: LiveJobSearchRequest):
             ranked_jobs=ranked_results
         )
     except Exception as e:
-        raise HTTPException(status_code=500, detail=f"Error searching and matching jobs: {str(e)}")
+        raise HTTPException(status_code=500, detail=f"Error searching jobs: {str(e)}")
 
-@router.post("/ai-coach", response_model=AICoachResponse, tags=["AI Career Coach"])
+@router.post("/ai-coach", response_model=AICoachResponse)
 async def ai_career_coach(request: AICoachRequest):
     try:
         if request.action == "tips":
@@ -182,7 +170,7 @@ async def ai_career_coach(request: AICoachRequest):
                 matched_skills=request.matched_skills
             )
         else:
-            raise HTTPException(status_code=400, detail=f"Unknown action: {request.action}.")
+            raise HTTPException(status_code=400, detail=f"Unknown action: {request.action}")
 
         return AICoachResponse(
             status="success",
@@ -195,7 +183,7 @@ async def ai_career_coach(request: AICoachRequest):
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"AI Coach error: {str(e)}")
 
-@router.post("/download-ats-report", tags=["PDF Reports"])
+@router.post("/download-ats-report")
 async def download_ats_audit_report(request: ATSReportRequest):
     try:
         pdf_bytes = generate_ats_audit_pdf(
@@ -216,20 +204,20 @@ async def download_ats_audit_report(request: ATSReportRequest):
             headers={"Content-Disposition": f"attachment; filename={safe_filename}"}
         )
     except Exception as e:
-        raise HTTPException(status_code=500, detail=f"PDF report generation error: {str(e)}")
+        raise HTTPException(status_code=500, detail=f"PDF generation error: {str(e)}")
 
-# Mount router under both /v1 and /api/v1
+# Mount endpoints under both /v1 and /api/v1
 app.include_router(router, prefix="/v1")
 app.include_router(router, prefix="/api/v1")
 
-# Mount Static Files for local dev
+# Static frontend assets
 frontend_dir = os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), "frontend")
 if os.path.exists(frontend_dir):
     app.mount("/static", StaticFiles(directory=frontend_dir), name="static")
 
-    @app.get("/", tags=["Frontend"])
+    @app.get("/")
     async def serve_index():
         index_path = os.path.join(frontend_dir, "index.html")
         if os.path.exists(index_path):
             return FileResponse(index_path)
-        return {"message": "Alture AI API Backend Active"}
+        return {"message": "Alture AI Backend Active"}

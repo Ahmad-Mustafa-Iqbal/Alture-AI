@@ -1,9 +1,3 @@
-"""
-Alture AI — Hugging Face ZeroGPU Production Backend Entrypoint
-============================================================
-Official Hugging Face ZeroGPU production runner using user's proven monkeypatching pattern.
-"""
-
 import os
 import sys
 import torch
@@ -15,28 +9,26 @@ try:
     import spaces
     @spaces.GPU
     def dummy_gpu_function():
-        return "ZeroGPU is active and ready"
+        return "ZeroGPU ready"
 except ImportError:
     def dummy_gpu_function():
-        return "Local CPU mode"
+        return "CPU mode"
 
 from deployment.backend.main import app as main_fastapi_app
 
-# Create Gradio demo to satisfy ZeroGPU compiler
 with gr.Blocks(title="Alture AI Backend API") as demo:
-    gr.Markdown("# Alture AI — Production ZeroGPU Backend Engine")
-    gr.Markdown("FastAPI REST endpoints available under `/api/v1` and `/v1`.")
-    btn = gr.Button("⚡ Verify ZeroGPU Pipeline", variant="primary")
+    gr.Markdown("# Alture AI — ZeroGPU Backend Engine")
+    gr.Markdown("REST API available under `/api/v1` and `/v1`.")
+    btn = gr.Button("Verify ZeroGPU Pipeline", variant="primary")
     out = gr.Textbox(label="Pipeline Output")
     btn.click(dummy_gpu_function, outputs=out)
 
-# Monkeypatch Gradio's internal FastAPI app creator (proven portfolio pattern)
+# Mount FastAPI app onto Gradio routes
 original_create_app = gr.routes.App.create_app
 
 def custom_create_app(*args, **kwargs):
     app = original_create_app(*args, **kwargs)
     
-    # Configure CORS & preflight middleware
     app.add_middleware(
         CORSMiddleware,
         allow_origins=["*"],
@@ -45,27 +37,9 @@ def custom_create_app(*args, **kwargs):
         allow_headers=["*"],
     )
 
-    @app.middleware("http")
-    async def cors_preflight_middleware(request, call_next):
-        if request.method == "OPTIONS":
-            return Response(
-                status_code=200,
-                headers={
-                    "Access-Control-Allow-Origin": "*",
-                    "Access-Control-Allow-Methods": "*",
-                    "Access-Control-Allow-Headers": "*",
-                }
-            )
-        response = await call_next(request)
-        response.headers["Access-Control-Allow-Origin"] = "*"
-        response.headers["Access-Control-Allow-Methods"] = "*"
-        response.headers["Access-Control-Allow-Headers"] = "*"
-        return response
-
-    # Inject main FastAPI app router
     app.include_router(main_fastapi_app.router)
     
-    # Reorder routes so /api and /v1 routes take precedence
+    # Ensure API routes take precedence over Gradio static handlers
     api_routes = []
     other_routes = []
     for route in app.router.routes:
