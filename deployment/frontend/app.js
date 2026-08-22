@@ -11,7 +11,10 @@ const COMPANY_LOGOS = {
     "VentureDive": { bg: "#6366f1", icon: "🚀", color: "#ffffff" },
     "Lemon.io": { bg: "#eab308", icon: "🍋", color: "#000000" },
     "A.Team": { bg: "#000000", icon: "▲", color: "#ffffff" },
-    "Shatterproof": { bg: "#0284c7", icon: "🛡️", color: "#ffffff" }
+    "Shatterproof": { bg: "#0284c7", icon: "🛡️", color: "#ffffff" },
+    "NetSol": { bg: "#059669", icon: "💻", color: "#ffffff" },
+    "Contour": { bg: "#7c3aed", icon: "📊", color: "#ffffff" },
+    "CureMD": { bg: "#0891b2", icon: "🏥", color: "#ffffff" }
 };
 
 function getCompanyBadge(name = "") {
@@ -20,7 +23,51 @@ function getCompanyBadge(name = "") {
             return COMPANY_LOGOS[key];
         }
     }
-    return { bg: "#2563eb", icon: name.charAt(0).toUpperCase() || "💼", color: "#ffffff" };
+    return { bg: "#0284c7", icon: name.charAt(0).toUpperCase() || "💼", color: "#ffffff" };
+}
+
+// 🎯 Animated Circular SVG Progress Gauge
+function ScoreRadialGauge({ score = 0, fitTier = "Good Fit" }) {
+    const radius = 33;
+    const circumference = 2 * Math.PI * radius;
+    const progress = Math.min(Math.max(score, 0), 100);
+    const strokeDashoffset = circumference - (progress / 100) * circumference;
+    
+    const strokeColor = progress >= 85 ? "#10b981" : progress >= 70 ? "#f59e0b" : "#ef4444";
+    const badgeText = progress >= 85 ? "🎯 High Compatibility" : progress >= 70 ? "⚡ Moderate Compatibility" : "⚠️ Low Compatibility";
+
+    return (
+        <div className="radial-gauge-container">
+            <div className="radial-gauge-svg-wrap">
+                <svg className="radial-gauge-svg" viewBox="0 0 80 80">
+                    <circle 
+                        className="radial-circle-bg" 
+                        cx="40" 
+                        cy="40" 
+                        r={radius} 
+                    />
+                    <circle 
+                        className="radial-circle-val" 
+                        cx="40" 
+                        cy="40" 
+                        r={radius}
+                        stroke={strokeColor}
+                        strokeDasharray={circumference}
+                        strokeDashoffset={strokeDashoffset}
+                    />
+                </svg>
+                <div className="radial-gauge-text">
+                    <span className="radial-gauge-pct" style={{ color: strokeColor }}>{score}%</span>
+                </div>
+            </div>
+            <div className="radial-gauge-info">
+                <div className="radial-gauge-title">{badgeText}</div>
+                <div className="radial-gauge-sub">
+                    Hybrid TF-IDF + Sentence-BERT XGBoost Model (<strong>{fitTier}</strong>)
+                </div>
+            </div>
+        </div>
+    );
 }
 
 function App() {
@@ -58,6 +105,7 @@ function App() {
     const [coachTab, setCoachTab] = useState("tips"); // 'tips' | 'cover_letter' | 'interview_prep'
     const [coachError, setCoachError] = useState("");
     const [pdfDownloading, setPdfDownloading] = useState(false);
+    const [copiedLetter, setCopiedLetter] = useState(false);
 
     // Load initial data
     useEffect(() => {
@@ -235,7 +283,7 @@ function App() {
                 const url = window.URL.createObjectURL(blob);
                 const a = document.createElement("a");
                 a.href = url;
-                a.download = `Alture_AI_ATS_Audit_${(userName || "Candidate").replace(/\\s+/g, "_")}.pdf`;
+                a.download = `Alture_AI_ATS_Audit_${(userName || "Candidate").replace(/\s+/g, "_")}.pdf`;
                 document.body.appendChild(a);
                 a.click();
                 window.URL.revokeObjectURL(url);
@@ -252,7 +300,7 @@ function App() {
 
     return (
         <div className="app-container">
-            {/* 1. TOP MAIN NAVBAR (CLEAN & NON-REDUNDANT) */}
+            {/* 1. TOP MAIN NAVBAR */}
             <header className="top-profile-bar">
                 <div className="profile-info">
                     <div className="brand-logo-wrapper">
@@ -282,7 +330,10 @@ function App() {
                         <div className="profile-avatar">
                             {userName.split(' ').map(n => n[0]).join('').substring(0, 2)}
                         </div>
-                        <span style={{ fontSize: '0.85rem', fontWeight: '700' }}>{userName}</span>
+                        <div style={{ display: 'flex', flexDirection: 'column' }}>
+                            <span style={{ fontSize: '0.85rem', fontWeight: '700', color: '#0f172a' }}>{userName}</span>
+                            <span className="profile-status">Verified Active</span>
+                        </div>
                     </div>
                 </div>
             </header>
@@ -294,56 +345,48 @@ function App() {
                 <div>
                     {/* Hero Search Section */}
                     <section className="hero-search-section">
-                        <div style={{ textAlign: 'center', marginBottom: '1.25rem', color: '#ffffff' }}>
-                            <h1 style={{ fontSize: '1.85rem', fontWeight: '800', letterSpacing: '-0.02em', marginBottom: '4px' }}>
+                        <div style={{ textAlign: 'center', marginBottom: '1.5rem', color: '#ffffff' }}>
+                            <h1 style={{ fontSize: '1.95rem', fontWeight: '800', letterSpacing: '-0.02em', marginBottom: '6px' }}>
                                 Find & Apply to Tech Jobs in Pakistan & Worldwide
                             </h1>
-                            <p style={{ fontSize: '0.95rem', color: '#bae6fd' }}>
-                                Search real-time open positions across LinkedIn, Indeed, Systems Ltd, Arbisoft & Global Remote feeds.
+                            <p style={{ fontSize: '0.95rem', color: '#bae6fd', maxWidth: '650px', margin: '0 auto' }}>
+                                Real-time open positions aggregated from LinkedIn, Indeed, Systems Ltd, Arbisoft & Global Tech Feeds.
                             </p>
                         </div>
 
                         <div className="search-box-container">
-                            <div className="search-input-group">
-                                <span className="search-icon">🔍</span>
+                            <div className="search-input-wrapper">
+                                <span style={{ fontSize: '1.1rem' }}>🔍</span>
                                 <input 
                                     type="text" 
                                     className="search-input" 
-                                    placeholder="Job title, technical skill, or keyword"
+                                    placeholder="Job title or domain (e.g. Frontend Developer, DevOps, AI Engineer)"
                                     value={searchQuery}
                                     onChange={(e) => setSearchQuery(e.target.value)}
                                     onKeyDown={(e) => e.key === 'Enter' && handleSearchSubmit()}
                                 />
                             </div>
 
-                            <div className="search-divider"></div>
-
-                            <div className="search-input-group">
-                                <span className="search-icon">📍</span>
+                            <div className="search-input-wrapper">
+                                <span style={{ fontSize: '1.1rem' }}>📍</span>
                                 <input 
                                     type="text" 
                                     className="search-input" 
-                                    placeholder="City or Country (e.g. Lahore, Karachi, Pakistan, Remote)"
+                                    placeholder="City or Region (e.g. Lahore, Karachi, Pakistan, Remote)"
                                     value={searchLocation}
                                     onChange={(e) => setSearchLocation(e.target.value)}
                                     onKeyDown={(e) => e.key === 'Enter' && handleSearchSubmit()}
                                 />
                             </div>
 
-                            {(searchQuery || searchLocation) && (
-                                <button className="search-clear-btn" onClick={() => { setSearchQuery(""); setSearchLocation(""); }}>
-                                    Clear
-                                </button>
-                            )}
-
                             <button className="search-submit-btn" onClick={handleSearchSubmit} disabled={loading}>
-                                {loading ? "Searching..." : "Search Jobs"}
+                                {loading ? "Searching..." : "Search Jobs ↗"}
                             </button>
                         </div>
                     </section>
 
                     {/* Main 2-Column Job Split Board */}
-                    <main className="main-layout" style={{ marginTop: '2.5rem' }}>
+                    <main className="main-layout" style={{ marginTop: '2.75rem' }}>
                         {/* Left Feed */}
                         <div className="jobs-feed-column">
                             <div className="feed-header">
@@ -355,45 +398,63 @@ function App() {
                                 </div>
                             </div>
 
-                            <div className="jobs-list-container">
-                                {jobsList.map(job => {
-                                    const isSelected = selectedJob && selectedJob.job_id === job.job_id;
-                                    const isSaved = savedJobs.has(job.job_id);
-                                    const badge = getCompanyBadge(job.company);
-
-                                    return (
-                                        <div 
-                                            key={job.job_id} 
-                                            className={`job-feed-card ${isSelected ? 'active' : ''}`}
-                                            onClick={() => setSelectedJob(job)}
-                                        >
-                                            <div className="card-top-row">
-                                                <div className="company-logo-badge" style={{ backgroundColor: badge.bg, color: badge.color }}>
-                                                    {badge.icon}
+                            {loading ? (
+                                <div className="jobs-list-container">
+                                    {[1, 2, 3].map(i => (
+                                        <div key={i} className="skeleton-card">
+                                            <div style={{ display: 'flex', gap: '12px', alignItems: 'center' }}>
+                                                <div className="skeleton-box" style={{ width: '42px', height: '42px', borderRadius: '8px' }}></div>
+                                                <div style={{ flex: 1, display: 'flex', flexDirection: 'column', gap: '6px' }}>
+                                                    <div className="skeleton-box" style={{ width: '60%', height: '18px' }}></div>
+                                                    <div className="skeleton-box" style={{ width: '40%', height: '14px' }}></div>
                                                 </div>
-                                                <div className="card-title-group">
-                                                    <h3 className="card-job-title">{job.title}</h3>
-                                                    <div className="card-company-name">{job.company} • {job.location}</div>
-                                                </div>
-                                                <button 
-                                                    className="save-job-icon" 
-                                                    onClick={(e) => { e.stopPropagation(); toggleSaveJob(job.job_id); }}
-                                                >
-                                                    {isSaved ? "Saved 🔖" : "Save 🔖"}
-                                                </button>
                                             </div>
-
-                                            {/* Tags Row */}
-                                            <div className="card-tags-row">
-                                                <span className="tag-badge fulltime">Full Time</span>
-                                                <span className="tag-badge remote">{job.type || "Remote"}</span>
-                                                {job.salary_range && <span className="tag-badge senior">{job.salary_range}</span>}
-                                                <span className="card-post-time">Active opening</span>
-                                            </div>
+                                            <div className="skeleton-box" style={{ width: '100%', height: '24px', borderRadius: '20px' }}></div>
                                         </div>
-                                    );
-                                })}
-                            </div>
+                                    ))}
+                                </div>
+                            ) : (
+                                <div className="jobs-list-container">
+                                    {jobsList.map((job, idx) => {
+                                        const isSelected = selectedJob && selectedJob.job_id === job.job_id;
+                                        const isSaved = savedJobs.has(job.job_id);
+                                        const badge = getCompanyBadge(job.company);
+
+                                        return (
+                                            <div 
+                                                key={job.job_id} 
+                                                className={`job-feed-card ${isSelected ? 'active' : ''}`}
+                                                style={{ animationDelay: `${idx * 40}ms` }}
+                                                onClick={() => setSelectedJob(job)}
+                                            >
+                                                <div className="card-top-row">
+                                                    <div className="company-logo-badge" style={{ backgroundColor: badge.bg, color: badge.color }}>
+                                                        {badge.icon}
+                                                    </div>
+                                                    <div className="card-title-group">
+                                                        <h3 className="card-job-title">{job.title}</h3>
+                                                        <div className="card-company-name">{job.company} • {job.location}</div>
+                                                    </div>
+                                                    <button 
+                                                        className="save-job-icon" 
+                                                        onClick={(e) => { e.stopPropagation(); toggleSaveJob(job.job_id); }}
+                                                    >
+                                                        {isSaved ? "Saved 🔖" : "Save 🔖"}
+                                                    </button>
+                                                </div>
+
+                                                {/* Tags Row */}
+                                                <div className="card-tags-row">
+                                                    <span className="tag-badge fulltime">Full Time</span>
+                                                    <span className="tag-badge remote">{job.type || "Remote"}</span>
+                                                    {job.salary_range && <span className="tag-badge senior">{job.salary_range}</span>}
+                                                    <span className="card-post-time">Active opening</span>
+                                                </div>
+                                            </div>
+                                        );
+                                    })}
+                                </div>
+                            )}
                         </div>
 
                         {/* Right Detail Pane */}
@@ -409,17 +470,17 @@ function App() {
                                     <span style={{ fontSize: '1.25rem', color: '#94a3b8' }}>⋮</span>
                                 </div>
 
-                                <div className="detail-meta-list">
-                                    <div className="detail-meta-item">
-                                        <span className="detail-meta-icon">💼</span>
+                                <div style={{ display: 'flex', flexDirection: 'column', gap: '0.6rem', marginBottom: '1.25rem' }}>
+                                    <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', fontSize: '0.88rem', color: '#334155' }}>
+                                        <span>💼</span>
                                         <span><strong>Full-time</strong> · Professional Tech Opening</span>
                                     </div>
-                                    <div className="detail-meta-item">
-                                        <span className="detail-meta-icon">💰</span>
+                                    <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', fontSize: '0.88rem', color: '#334155' }}>
+                                        <span>💰</span>
                                         <span>{selectedJob.salary_range || "Market Competitive Compensation"}</span>
                                     </div>
-                                    <div className="detail-meta-item">
-                                        <span className="detail-meta-icon">📋</span>
+                                    <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', fontSize: '0.88rem', color: '#334155' }}>
+                                        <span>📋</span>
                                         <span>Required Skills: {selectedJob.matched_skills_sample.concat(selectedJob.missing_skills_sample).slice(0, 6).join(', ') || "Python, React, Software Engineering"}</span>
                                     </div>
                                 </div>
@@ -444,10 +505,10 @@ function App() {
                                     </button>
                                 </div>
 
-                                <div className="job-body-section">
-                                    <h3 className="job-body-title">Job Overview & Requirements</h3>
-                                    <p className="job-body-text">
-                                        {selectedJob.title} position at {selectedJob.company}. You will participate in architecture, development, code optimization, and delivery of production systems.
+                                <div>
+                                    <h3 style={{ fontSize: '0.98rem', fontWeight: '800', color: '#0f172a', marginBottom: '6px' }}>Job Overview & Requirements</h3>
+                                    <p style={{ fontSize: '0.88rem', color: '#475569', lineHeight: '1.6' }}>
+                                        {selectedJob.description || `${selectedJob.title} position at ${selectedJob.company}. You will participate in architecture, development, code optimization, and delivery of production systems.`}
                                     </p>
                                 </div>
                             </div>
@@ -469,29 +530,29 @@ function App() {
                     <div style={{ background: '#ffffff', border: '1px solid #e2e8f0', borderRadius: '16px', padding: '1.75rem', marginBottom: '2rem', boxShadow: '0 4px 14px rgba(0,0,0,0.04)' }}>
                         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.25rem', flexWrap: 'wrap', gap: '0.5rem' }}>
                             <div>
-                                <span style={{ fontSize: '0.78rem', fontWeight: '800', textTransform: 'uppercase', color: '#0284c7', letterSpacing: '0.05em' }}>
+                                <span style={{ fontSize: '0.76rem', fontWeight: '800', textTransform: 'uppercase', color: '#0284c7', letterSpacing: '0.05em' }}>
                                     🧠 Multi-Modal NLP Intelligence Engine
                                 </span>
-                                <h2 style={{ fontSize: '1.5rem', fontWeight: '800', color: '#0f172a', margin: '2px 0' }}>
+                                <h2 style={{ fontSize: '1.45rem', fontWeight: '800', color: '#0f172a', margin: '2px 0' }}>
                                     Resume Compatibility & ATS Screening
                                 </h2>
                             </div>
 
                             <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
                                 <button 
-                                    style={{ padding: '6px 12px', fontSize: '0.8rem', fontWeight: '700', background: '#f8fafc', border: '1px solid #cbd5e1', borderRadius: '6px', cursor: 'pointer', color: '#475569' }}
+                                    style={{ padding: '6px 12px', fontSize: '0.78rem', fontWeight: '700', background: showTextPaste ? '#e0f2fe' : '#f1f5f9', color: showTextPaste ? '#0369a1' : '#475569', border: '1px solid #cbd5e1', borderRadius: '6px', cursor: 'pointer' }}
                                     onClick={() => setShowTextPaste(!showTextPaste)}
                                 >
-                                    {showTextPaste ? "Hide Text Editor" : "✍️ Paste Resume Text"}
+                                    📝 {showTextPaste ? "Hide Text Paste" : "Paste Raw CV"}
                                 </button>
                             </div>
                         </div>
 
-                        {/* Drag & Drop File Upload Box */}
+                        {/* Hidden Real File Input */}
                         <input 
                             type="file" 
-                            ref={fileInputRef}
-                            style={{ display: 'none' }}
+                            ref={fileInputRef} 
+                            style={{ display: 'none' }} 
                             accept=".pdf,.docx,.doc,.txt"
                             onChange={(e) => {
                                 if (e.target.files && e.target.files[0]) {
@@ -500,6 +561,7 @@ function App() {
                             }}
                         />
 
+                        {/* Interactive Dropzone */}
                         <div 
                             className={`upload-dropzone ${isDragging ? 'dragging' : ''}`}
                             style={{ padding: '1.25rem', marginBottom: '1rem', border: '2px dashed #94a3b8', background: '#f8fafc' }}
@@ -514,13 +576,13 @@ function App() {
                                 }
                             }}
                         >
-                            <div className="upload-icon-circle" style={{ width: '40px', height: '40px', fontSize: '1.2rem', marginBottom: '2px' }}>
+                            <div className="upload-icon-circle" style={{ width: '40px', height: '40px', fontSize: '1.3rem', marginBottom: '2px' }}>
                                 {isUploading ? "⏳" : "📁"}
                             </div>
-                            <div className="upload-prompt-text" style={{ fontSize: '0.92rem' }}>
+                            <div style={{ fontSize: '0.92rem', fontWeight: '700', color: '#0f172a' }}>
                                 {isUploading ? "Parsing & Extracting Text from Resume..." : "Drop your Resume here (PDF, DOCX, TXT) or Click to Browse"}
                             </div>
-                            <div className="upload-prompt-sub" style={{ fontSize: '0.78rem' }}>
+                            <div style={{ fontSize: '0.78rem', color: '#64748b', marginTop: '2px' }}>
                                 Automatically calculates ATS Compatibility scores across all live jobs
                             </div>
                         </div>
@@ -573,8 +635,8 @@ function App() {
                             </span>
                             {sampleData.personas.map(p => (
                                 <button 
-                                    key={p.id}
-                                    style={{ padding: '4px 10px', fontSize: '0.78rem', fontWeight: '600', background: userName === p.name ? '#e0f2fe' : '#f1f5f9', border: userName === p.name ? '1px solid #0284c7' : '1px solid #cbd5e1', borderRadius: '6px', color: userName === p.name ? '#0369a1' : '#334155', cursor: 'pointer' }}
+                                    key={p.id} 
+                                    style={{ padding: '4px 10px', fontSize: '0.78rem', fontWeight: '600', background: userName === p.name ? '#e0f2fe' : '#f1f5f9', border: userName === p.name ? '1px solid #0284c7' : '1px solid #cbd5e1', borderRadius: '6px', color: userName === p.name ? '#0369a1' : '#334155', cursor: 'pointer', transition: 'all 0.15s ease' }}
                                     onClick={() => handleSelectPersona(p)}
                                 >
                                     👤 {p.name} ({p.title.split(' ')[0]} {p.title.split(' ')[1] || ''})
@@ -596,44 +658,62 @@ function App() {
                                 </div>
                             </div>
 
-                            <div className="jobs-list-container">
-                                {jobsList.map(job => {
-                                    const isSelected = selectedJob && selectedJob.job_id === job.job_id;
-                                    const badge = getCompanyBadge(job.company);
-
-                                    return (
-                                        <div 
-                                            key={job.job_id} 
-                                            className={`job-feed-card ${isSelected ? 'active' : ''}`}
-                                            onClick={() => setSelectedJob(job)}
-                                        >
-                                            <div className="card-top-row">
-                                                <div className="company-logo-badge" style={{ backgroundColor: badge.bg, color: badge.color }}>
-                                                    {badge.icon}
-                                                </div>
-                                                <div className="card-title-group">
-                                                    <h3 className="card-job-title">{job.title}</h3>
-                                                    <div className="card-company-name">{job.company} • {job.location}</div>
-                                                </div>
-                                                <div style={{ fontSize: '1.25rem', fontFamily: 'monospace', fontWeight: '800', color: job.fit_tier === 'Good Fit' ? '#15803d' : job.fit_tier === 'Potential Fit' ? '#b45309' : '#b91c1c' }}>
-                                                    {job.ats_score}%
+                            {loading ? (
+                                <div className="jobs-list-container">
+                                    {[1, 2, 3].map(i => (
+                                        <div key={i} className="skeleton-card">
+                                            <div style={{ display: 'flex', gap: '12px', alignItems: 'center' }}>
+                                                <div className="skeleton-box" style={{ width: '42px', height: '42px', borderRadius: '8px' }}></div>
+                                                <div style={{ flex: 1, display: 'flex', flexDirection: 'column', gap: '6px' }}>
+                                                    <div className="skeleton-box" style={{ width: '65%', height: '18px' }}></div>
+                                                    <div className="skeleton-box" style={{ width: '40%', height: '14px' }}></div>
                                                 </div>
                                             </div>
-
-                                            <div className="profile-match-pill">
-                                                <div className="match-avatar-mini">✓</div>
-                                                <span>{job.fit_tier} Compatibility ({job.matched_skills_count} Skills Matched)</span>
-                                            </div>
-
-                                            <div className="card-tags-row">
-                                                <span className={`tag-badge ${job.fit_tier === 'Good Fit' ? 'senior' : 'fulltime'}`}>{job.fit_tier}</span>
-                                                <span className="tag-badge ats-score">{job.ats_score}% ATS Score</span>
-                                                <span className="card-post-time">Ranked</span>
-                                            </div>
+                                            <div className="skeleton-box" style={{ width: '100%', height: '24px', borderRadius: '20px' }}></div>
                                         </div>
-                                    );
-                                })}
-                            </div>
+                                    ))}
+                                </div>
+                            ) : (
+                                <div className="jobs-list-container">
+                                    {jobsList.map((job, idx) => {
+                                        const isSelected = selectedJob && selectedJob.job_id === job.job_id;
+                                        const badge = getCompanyBadge(job.company);
+
+                                        return (
+                                            <div 
+                                                key={job.job_id} 
+                                                className={`job-feed-card ${isSelected ? 'active' : ''}`}
+                                                style={{ animationDelay: `${idx * 40}ms` }}
+                                                onClick={() => setSelectedJob(job)}
+                                            >
+                                                <div className="card-top-row">
+                                                    <div className="company-logo-badge" style={{ backgroundColor: badge.bg, color: badge.color }}>
+                                                        {badge.icon}
+                                                    </div>
+                                                    <div className="card-title-group">
+                                                        <h3 className="card-job-title">{job.title}</h3>
+                                                        <div className="card-company-name">{job.company} • {job.location}</div>
+                                                    </div>
+                                                    <div style={{ fontSize: '1.25rem', fontFamily: 'monospace', fontWeight: '800', color: job.fit_tier === 'Good Fit' ? '#15803d' : job.fit_tier === 'Potential Fit' ? '#b45309' : '#b91c1c' }}>
+                                                        {job.ats_score}%
+                                                    </div>
+                                                </div>
+
+                                                <div className="profile-match-pill">
+                                                    <div className="match-avatar-mini">✓</div>
+                                                    <span>{job.fit_tier} Compatibility ({job.matched_skills_count} Skills Matched)</span>
+                                                </div>
+
+                                                <div className="card-tags-row">
+                                                    <span className={`tag-badge ${job.fit_tier === 'Good Fit' ? 'senior' : 'fulltime'}`}>{job.fit_tier}</span>
+                                                    <span className="tag-badge ats-score">{job.ats_score}% ATS Score</span>
+                                                    <span className="card-post-time">Ranked</span>
+                                                </div>
+                                            </div>
+                                        );
+                                    })}
+                                </div>
+                            )}
                         </div>
 
                         {/* Right Deep ATS Inspector */}
@@ -647,9 +727,6 @@ function App() {
                                         </div>
                                     </div>
                                     <div style={{ textAlign: 'right' }}>
-                                        <div className="gauge-score good" style={{ fontSize: '2.4rem', lineHeight: '1', marginBottom: '6px' }}>
-                                            {selectedJob.ats_score}%
-                                        </div>
                                         <button 
                                             className="jump-coach-pill"
                                             onClick={() => document.getElementById('gemini-coach-section')?.scrollIntoView({ behavior: 'smooth' })}
@@ -658,6 +735,9 @@ function App() {
                                         </button>
                                     </div>
                                 </div>
+
+                                {/* 🎯 Animated Circular SVG Progress Meter */}
+                                <ScoreRadialGauge score={selectedJob.ats_score} fitTier={selectedJob.fit_tier} />
 
                                 {/* ATS Score Gauge Card */}
                                 <div className="ats-deep-card">
@@ -815,13 +895,14 @@ function App() {
                                                         </div>
                                                     )}
                                                     <button 
-                                                        className="coach-copy-btn"
+                                                        className={`coach-copy-btn ${copiedLetter ? 'copied' : ''}`}
                                                         onClick={() => {
                                                             navigator.clipboard.writeText(coachData.cover_letter);
-                                                            alert('Cover letter copied to clipboard!');
+                                                            setCopiedLetter(true);
+                                                            setTimeout(() => setCopiedLetter(false), 2200);
                                                         }}
                                                     >
-                                                        📋 Copy to Clipboard
+                                                        {copiedLetter ? "✓ Copied to Clipboard!" : "📋 Copy to Clipboard"}
                                                     </button>
                                                 </div>
                                             )}
@@ -843,7 +924,7 @@ function App() {
                                         </div>
                                     )}
 
-                                    {/* Initial State (no data yet) */}
+                                    {/* Initial State */}
                                     {!coachData && !coachLoading && !coachError && (
                                         <div className="coach-empty">
                                             Click any tab above to get AI-powered career coaching for this job.
