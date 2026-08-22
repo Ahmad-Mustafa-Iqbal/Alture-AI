@@ -47,3 +47,7 @@ outputs/
 
 # HuggingFace cache
 .cache/
+
+# Executables & Temp Paper Folders
+*.exe
+paper/figures_opt/
