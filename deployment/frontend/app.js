@@ -305,7 +305,10 @@ function App() {
                 <div className="profile-info">
                     <div className="brand-logo-wrapper">
                         <img src="/static/logo.png" alt="Alture AI" className="header-brand-logo" onError={(e) => { e.target.style.display = 'none'; }} />
-                        <span className="brand-name-tag">Alture AI</span>
+                        <div className="brand-text-col">
+                            <span className="brand-name-tag">Alture AI</span>
+                            <span className="brand-sub-badge">ATS v2.4 · IEEE Engine</span>
+                        </div>
                     </div>
 
                     {/* TWO PRIMARY PAGES TABS */}
@@ -326,13 +329,23 @@ function App() {
                 </div>
 
                 <div className="profile-actions">
+                    <button 
+                        className="top-saved-btn"
+                        onClick={() => {
+                            if (savedJobs.size > 0) {
+                                alert(`You have ${savedJobs.size} saved jobs in this session.`);
+                            }
+                        }}
+                    >
+                        🔖 Saved ({savedJobs.size})
+                    </button>
                     <div className="profile-user-pill">
                         <div className="profile-avatar">
                             {userName.split(' ').map(n => n[0]).join('').substring(0, 2)}
                         </div>
                         <div style={{ display: 'flex', flexDirection: 'column' }}>
                             <span style={{ fontSize: '0.85rem', fontWeight: '700', color: '#0f172a' }}>{userName}</span>
-                            <span className="profile-status">Verified Active</span>
+                            <span className="profile-status">🎯 {userRole.split(' ')[0]} {userRole.split(' ')[1] || ''}</span>
                         </div>
                     </div>
                 </div>
@@ -345,12 +358,15 @@ function App() {
                 <div>
                     {/* Hero Search Section */}
                     <section className="hero-search-section">
+                        <div className="hero-pill-badge">
+                            ⚡ Real-Time Multi-Source Job Stream · Pakistan & Worldwide
+                        </div>
                         <div style={{ textAlign: 'center', marginBottom: '1.5rem', color: '#ffffff' }}>
-                            <h1 style={{ fontSize: '1.95rem', fontWeight: '800', letterSpacing: '-0.02em', marginBottom: '6px' }}>
-                                Find & Apply to Tech Jobs in Pakistan & Worldwide
+                            <h1 style={{ fontSize: '2.1rem', fontWeight: '800', letterSpacing: '-0.025em', marginBottom: '6px' }}>
+                                Find & Match Top Tech Jobs With AI Precision
                             </h1>
                             <p style={{ fontSize: '0.95rem', color: '#bae6fd', maxWidth: '650px', margin: '0 auto' }}>
-                                Real-time open positions aggregated from LinkedIn, Indeed, Systems Ltd, Arbisoft & Global Tech Feeds.
+                                Powered by JSearch Live Stream, Systems Ltd, Arbisoft & Machine Learning ATS Evaluation.
                             </p>
                         </div>
 
@@ -365,6 +381,9 @@ function App() {
                                     onChange={(e) => setSearchQuery(e.target.value)}
                                     onKeyDown={(e) => e.key === 'Enter' && handleSearchSubmit()}
                                 />
+                                {searchQuery && (
+                                    <button className="search-clear-btn" onClick={() => setSearchQuery("")}>×</button>
+                                )}
                             </div>
 
                             <div className="search-input-wrapper">
@@ -377,6 +396,9 @@ function App() {
                                     onChange={(e) => setSearchLocation(e.target.value)}
                                     onKeyDown={(e) => e.key === 'Enter' && handleSearchSubmit()}
                                 />
+                                {searchLocation && (
+                                    <button className="search-clear-btn" onClick={() => setSearchLocation("")}>×</button>
+                                )}
                             </div>
 
                             <button className="search-submit-btn" onClick={handleSearchSubmit} disabled={loading}>
@@ -385,8 +407,34 @@ function App() {
                         </div>
                     </section>
 
+                    {/* Popular Trending Quick Searches Bar */}
+                    <div className="trending-tags-bar">
+                        <span className="trending-label">🔥 Quick Search:</span>
+                        {[
+                            { label: "⚡ Full Stack", query: "Full Stack Developer" },
+                            { label: "⚛️ React / Frontend", query: "Frontend Developer" },
+                            { label: "🐍 Python Backend", query: "Backend Developer" },
+                            { label: "☁️ DevOps & Cloud", query: "DevOps Engineer" },
+                            { label: "🤖 AI & ML", query: "AI Engineer" },
+                            { label: "📊 Data Scientist", query: "Data Scientist" },
+                            { label: "🏢 Systems Ltd", query: "Systems Limited" },
+                            { label: "⚡ Arbisoft", query: "Arbisoft" }
+                        ].map((chip) => (
+                            <button
+                                key={chip.label}
+                                className="trending-chip"
+                                onClick={() => {
+                                    setSearchQuery(chip.query);
+                                    fetchJobsAndMatch(resumeText, chip.query, searchLocation);
+                                }}
+                            >
+                                {chip.label}
+                            </button>
+                        ))}
+                    </div>
+
                     {/* Main 2-Column Job Split Board */}
-                    <main className="main-layout" style={{ marginTop: '2.75rem' }}>
+                    <main className="main-layout" style={{ marginTop: '1.5rem' }}>
                         {/* Left Feed */}
                         <div className="jobs-feed-column">
                             <div className="feed-header">
