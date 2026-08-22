@@ -646,8 +646,16 @@ function App() {
                                             <strong>{selectedJob.company}</strong> • {selectedJob.location}
                                         </div>
                                     </div>
-                                    <div className="gauge-score good" style={{ fontSize: '2.5rem', lineHeight: '1' }}>
-                                        {selectedJob.ats_score}%
+                                    <div style={{ textAlign: 'right' }}>
+                                        <div className="gauge-score good" style={{ fontSize: '2.4rem', lineHeight: '1', marginBottom: '6px' }}>
+                                            {selectedJob.ats_score}%
+                                        </div>
+                                        <button 
+                                            className="jump-coach-pill"
+                                            onClick={() => document.getElementById('gemini-coach-section')?.scrollIntoView({ behavior: 'smooth' })}
+                                        >
+                                            ✨ Jump to AI Coach ↓
+                                        </button>
                                     </div>
                                 </div>
 
@@ -710,7 +718,7 @@ function App() {
                                 </div>
 
                                 {/* ═══ GEMINI AI CAREER COACH PANEL ═══ */}
-                                <div className="coach-panel">
+                                <div className="coach-panel" id="gemini-coach-section">
                                     <div className="coach-header">
                                         <div>
                                             <span className="coach-badge">✨ Powered by Google Gemini</span>
