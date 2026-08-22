@@ -150,17 +150,26 @@ uvicorn deployment.backend.main:app --reload --port 8000
 - **matplotlib / seaborn / plotly** — Visualization
 - **datasets** (HuggingFace) — Dataset loading
 
+## 🌐 Live Deployments
+
+- ⚡ **Interactive Web App (Vercel)**: [https://alture-ai.vercel.app](https://alture-ai.vercel.app)
+- 🤗 **ZeroGPU Backend Microservice (Hugging Face Spaces)**: [https://huggingface.co/spaces/Mozi1223/Alture-AI](https://huggingface.co/spaces/Mozi1223/Alture-AI)
+- 📦 **GitHub Repository**: [https://github.com/Ahmad-Mustafa-Iqbal/Alture-AI](https://github.com/Ahmad-Mustafa-Iqbal/Alture-AI)
+
 ## 📝 Research Paper
 
-The IEEE-format research paper is located in the `paper/` folder:
-- `paper/main.tex` — LaTeX source file
-- `paper/main.pdf` — Compiled PDF
-- `paper/references.bib` — Bibliography
+The publication-grade IEEE-format research paper is located in the `paper/` directory:
+- `paper/main.tex` — Self-contained LaTeX source file with embedded IEEE `thebibliography` citations
+- `paper/main.pdf` — Compiled 6-page double-column IEEE research paper
 
 ## 👤 Author
 
-Ahmad — Internship Capstone Project (Week 7–8)
+**Ahmad Mustafa Iqbal**  
+*Department of Computer Science*  
+*COMSATS University Islamabad, Islamabad, Pakistan*  
+Email: [ahmadmustafaand@gmail.com](mailto:ahmadmustafaand@gmail.com)  
+GitHub: [@Ahmad-Mustafa-Iqbal](https://github.com/Ahmad-Mustafa-Iqbal)
 
 ## 📄 License
 
-This project is for educational purposes as part of an internship program.
+This project is licensed under the MIT License — see the LICENSE file for details.
