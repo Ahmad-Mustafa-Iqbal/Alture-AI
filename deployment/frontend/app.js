@@ -300,52 +300,38 @@ function App() {
 
     return (
         <div className="app-container">
-            {/* 1. TOP MAIN NAVBAR */}
+            {/* 1. TOP MAIN NAVBAR (CLEAN & BALANCED) */}
             <header className="top-profile-bar">
-                <div className="profile-info">
-                    <div className="brand-logo-wrapper">
-                        <img src="/static/logo.png" alt="Alture AI" className="header-brand-logo" onError={(e) => { e.target.style.display = 'none'; }} />
-                        <div className="brand-text-col">
-                            <span className="brand-name-tag">Alture AI</span>
-                            <span className="brand-sub-badge">ATS v2.4 · IEEE Engine</span>
-                        </div>
-                    </div>
-
-                    {/* TWO PRIMARY PAGES TABS */}
-                    <div className="main-nav-tabs">
-                        <button 
-                            className={`main-nav-tab ${currentPage === 'search' ? 'active' : ''}`}
-                            onClick={() => setCurrentPage('search')}
-                        >
-                            🔍 1. Live Job Discovery
-                        </button>
-                        <button 
-                            className={`main-nav-tab ${currentPage === 'matcher' ? 'active' : ''}`}
-                            onClick={() => setCurrentPage('matcher')}
-                        >
-                            🧠 2. AI Resume Matcher & Score
-                        </button>
-                    </div>
+                {/* Left: Brand Logo Only */}
+                <div className="brand-logo-wrapper">
+                    <img src="/static/logo.png" alt="Alture AI" className="header-brand-logo" onError={(e) => { e.target.style.display = 'none'; }} />
                 </div>
 
-                <div className="profile-actions">
+                {/* Center: Beautiful Segmented Page Navigation Tabs */}
+                <div className="main-nav-tabs">
                     <button 
-                        className="top-saved-btn"
-                        onClick={() => {
-                            if (savedJobs.size > 0) {
-                                alert(`You have ${savedJobs.size} saved jobs in this session.`);
-                            }
-                        }}
+                        className={`main-nav-tab ${currentPage === 'search' ? 'active' : ''}`}
+                        onClick={() => setCurrentPage('search')}
                     >
-                        🔖 Saved ({savedJobs.size})
+                        🔍 1. Live Job Discovery
                     </button>
+                    <button 
+                        className={`main-nav-tab ${currentPage === 'matcher' ? 'active' : ''}`}
+                        onClick={() => setCurrentPage('matcher')}
+                    >
+                        🧠 2. AI Resume Matcher & Score
+                    </button>
+                </div>
+
+                {/* Right: Active Candidate Profile */}
+                <div className="profile-actions">
                     <div className="profile-user-pill">
                         <div className="profile-avatar">
                             {userName.split(' ').map(n => n[0]).join('').substring(0, 2)}
                         </div>
-                        <div style={{ display: 'flex', flexDirection: 'column' }}>
-                            <span style={{ fontSize: '0.85rem', fontWeight: '700', color: '#0f172a' }}>{userName}</span>
-                            <span className="profile-status">🎯 {userRole.split(' ')[0]} {userRole.split(' ')[1] || ''}</span>
+                        <div style={{ display: 'flex', flexDirection: 'column', textAlign: 'left' }}>
+                            <span style={{ fontSize: '0.86rem', fontWeight: '700', color: '#0f172a', lineHeight: '1.2' }}>{userName}</span>
+                            <span className="profile-status" style={{ fontSize: '0.74rem' }}>🎯 {userRole}</span>
                         </div>
                     </div>
                 </div>
