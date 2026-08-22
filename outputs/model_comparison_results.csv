@@ -1,0 +1,8 @@
+,MAE,RMSE,R2,Precision@Top25%,Recall@Top25%,F1-Score,nDCG@10
+Baseline 1: TF-IDF + Ridge,17.5497,21.3971,0.2649,0.6742,0.5580,0.6106,0.6697
+Baseline 2: TF-IDF + Random Forest,20.5251,24.0724,0.0696,0.4444,0.0502,0.0901,0.4898
+Baseline 3: SBERT + Ridge,19.3662,22.7492,0.1690,0.5870,0.1693,0.2628,0.8600
+Proposed (v2.0): Cross-Encoder + XGBoost,17.1528,20.7907,0.3060,0.6716,0.4295,0.5239,0.9434
+Proposed (v2.0): Cross-Encoder + LightGBM,17.1678,20.6337,0.3164,0.6884,0.4295,0.5290,0.9053
+Proposed (v2.0): Cross-Encoder + CatBoost,18.5433,21.8373,0.2343,0.6324,0.2696,0.3780,0.9636
+Proposed (v2.0): Stacking Super-Ensemble,17.3214,20.7194,0.3107,0.7086,0.3887,0.5020,0.9469
