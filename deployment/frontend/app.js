@@ -70,6 +70,76 @@ function ScoreRadialGauge({ score = 0, fitTier = "Good Fit" }) {
     );
 }
 
+// 🎯 Client-Side Candidate Role & Name Extraction
+const KNOWN_ROLES_LIST = [
+    'Full Stack Developer', 'Full Stack Engineer',
+    'Frontend Developer', 'Frontend Engineer', 'UI Developer',
+    'Backend Developer', 'Backend Engineer',
+    'Machine Learning Engineer', 'AI Engineer', 'NLP Engineer', 'Deep Learning Engineer',
+    'Data Scientist', 'Data Analyst', 'Data Engineer',
+    'DevOps Engineer', 'Cloud Engineer', 'Site Reliability Engineer',
+    'Software Engineer', 'Software Developer',
+    'QA Engineer', 'Mobile Developer', 'Android Developer', 'iOS Developer',
+    'HR Specialist', 'HR Manager', 'Talent Acquisition Specialist',
+    'Product Manager', 'Project Manager', 'UI/UX Designer'
+];
+
+function detectRoleFromClientText(cleanText) {
+    if (!cleanText) return "Software Engineer";
+    const lines = cleanText.split('\n').map(l => l.trim()).filter(Boolean);
+    
+    // 1. Check top 8 lines
+    for (let i = 0; i < Math.min(lines.length, 8); i++) {
+        for (let role of KNOWN_ROLES_LIST) {
+            const re = new RegExp('\\b' + role.replace(/[.*+?^${}()|[\]\\]/g, '\\$&') + '\\b', 'i');
+            if (re.test(lines[i])) {
+                return role;
+            }
+        }
+    }
+    
+    // 2. Keyword heuristic fallback
+    const t = cleanText.toLowerCase();
+    if (t.includes('devops') || t.includes('kubernetes') || t.includes('docker') || t.includes('terraform') || t.includes('ci/cd') || t.includes('jenkins') || t.includes('ansible')) {
+        return 'DevOps Engineer';
+    }
+    if (t.includes('full stack') || (t.includes('react') && (t.includes('node') || t.includes('express') || t.includes('django')))) {
+        return 'Full Stack Developer';
+    }
+    if (t.includes('frontend') || t.includes('react') || t.includes('vue') || t.includes('angular') || t.includes('css3') || t.includes('html5')) {
+        return 'Frontend Developer';
+    }
+    if (t.includes('backend') || t.includes('fastapi') || t.includes('django') || t.includes('spring boot') || t.includes('express.js')) {
+        return 'Backend Developer';
+    }
+    if (t.includes('machine learning') || t.includes('pytorch') || t.includes('deep learning') || t.includes('tensorflow') || t.includes('computer vision') || t.includes('nlp')) {
+        return 'Machine Learning Engineer';
+    }
+    if (t.includes('data scientist')) {
+        return 'Data Scientist';
+    }
+    if (t.includes('data analyst') || t.includes('tableau') || t.includes('power bi')) {
+        return 'Data Analyst';
+    }
+    if (t.includes('hr') || t.includes('human resource') || t.includes('recruitment') || t.includes('talent acquisition')) {
+        return 'HR Specialist';
+    }
+    return 'Software Engineer';
+}
+
+function detectNameFromClientText(cleanText) {
+    if (!cleanText) return "Candidate";
+    const lines = cleanText.split('\n').map(l => l.trim()).filter(Boolean);
+    for (let line of lines.slice(0, 3)) {
+        if (!/resume|curriculum|vitae|summary|experience|education|contact|phone|email|profile/i.test(line)) {
+            if (line.split(/\s+/).length <= 4 && line.length <= 40) {
+                return line.replace(/\|/g, '').trim();
+            }
+        }
+    }
+    return "Candidate";
+}
+
 function App() {
     const [currentPage, setCurrentPage] = useState("search"); // 'search' (Page 1) | 'matcher' (Page 2)
     const [sampleData, setSampleData] = useState({ personas: [], jobs: [] });
@@ -646,18 +716,32 @@ function App() {
                                     style={{ width: '100%', height: '140px', padding: '10px', border: '1px solid #cbd5e1', borderRadius: '6px', fontFamily: 'monospace', fontSize: '0.82rem', outline: 'none' }}
                                     value={resumeText}
                                     onChange={(e) => setResumeText(e.target.value)}
-                                    placeholder="Paste raw CV text..."
+                                    placeholder="Paste raw CV text (e.g. DevOps Engineer with Kubernetes, Docker, CI/CD, Terraform, AWS)..."
                                 />
                                 <button 
                                     className="search-submit-btn" 
-                                    style={{ marginTop: '8px', padding: '6px 14px', fontSize: '0.82rem' }}
+                                    style={{ marginTop: '8px', padding: '6px 16px', fontSize: '0.82rem' }}
                                     onClick={() => {
-                                        setUploadedWordCount(resumeText.split(/\s+/).filter(Boolean).length);
+                                        const wordCount = resumeText.split(/\s+/).filter(Boolean).length;
+                                        setUploadedWordCount(wordCount);
+                                        
+                                        // Detect candidate role and name from raw pasted text
+                                        const detectedRole = detectRoleFromClientText(resumeText);
+                                        const detectedName = detectNameFromClientText(resumeText);
+                                        
+                                        if (detectedName && detectedName !== "Candidate") {
+                                            setUserName(detectedName);
+                                        }
+                                        setUserRole(detectedRole);
+                                        setSearchQuery(detectedRole);
+                                        setUploadedFileName("Pasted Resume Document");
                                         setShowTextPaste(false);
-                                        fetchJobsAndMatch(resumeText, searchQuery, searchLocation);
+                                        
+                                        // Automatically search and match jobs for detected role
+                                        fetchJobsAndMatch(resumeText, detectedRole, searchLocation);
                                     }}
                                 >
-                                    Re-Analyze Matched Jobs
+                                    🔍 Auto-Detect Role & Re-Analyze Matches
                                 </button>
                             </div>
                         )}
@@ -690,6 +774,40 @@ function App() {
                                 <div className="sort-by-text">
                                     Ranked by: <span className="sort-by-val" style={{ color: '#15803d' }}>Highest ATS Match % ⌵</span>
                                 </div>
+                            </div>
+
+                            {/* Domain Filter Pills on Matcher Page */}
+                            <div style={{ display: 'flex', gap: '5px', flexWrap: 'wrap', marginBottom: '1rem' }}>
+                                {[
+                                    { label: `🎯 ${userRole.split(' ')[0]} ${userRole.split(' ')[1] || ''}`, query: userRole },
+                                    { label: "☁️ DevOps", query: "DevOps Engineer" },
+                                    { label: "⚡ Full Stack", query: "Full Stack Developer" },
+                                    { label: "⚛️ Frontend", query: "Frontend Developer" },
+                                    { label: "🐍 Backend", query: "Backend Developer" },
+                                    { label: "🤖 AI & ML", query: "AI Engineer" },
+                                    { label: "📊 Data Analyst", query: "Data Analyst" }
+                                ].map((tab) => (
+                                    <button
+                                        key={tab.label}
+                                        style={{
+                                            padding: '4px 10px',
+                                            fontSize: '0.75rem',
+                                            fontWeight: '700',
+                                            background: searchQuery.toLowerCase().includes(tab.query.toLowerCase().split(' ')[0]) ? '#0284c7' : '#ffffff',
+                                            color: searchQuery.toLowerCase().includes(tab.query.toLowerCase().split(' ')[0]) ? '#ffffff' : '#475569',
+                                            border: '1px solid #cbd5e1',
+                                            borderRadius: '999px',
+                                            cursor: 'pointer',
+                                            transition: 'all 0.15s ease'
+                                        }}
+                                        onClick={() => {
+                                            setSearchQuery(tab.query);
+                                            fetchJobsAndMatch(resumeText, tab.query, searchLocation);
+                                        }}
+                                    >
+                                        {tab.label}
+                                    </button>
+                                ))}
                             </div>
 
                             {loading ? (
