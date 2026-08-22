@@ -4,7 +4,7 @@
 % Compatibility and Reciprocal Recommendation
 %
 % Authors: Ahmad Mustafa Iqbal
-% Department of Computer Science, COMSATS University Islamabad, Islamabad Campus
+% Department of Computer Science, COMSATS University Islamabad, Islamabad, Pakistan
 % ═══════════════════════════════════════════════════════════════════════════
 \documentclass[conference]{IEEEtran}
 
@@ -43,8 +43,7 @@
     \IEEEauthorblockN{Ahmad Mustafa Iqbal}
     \IEEEauthorblockA{
         \textit{Department of Computer Science} \\
-        \textit{COMSATS University Islamabad, Islamabad Campus} \\
-        Islamabad, Pakistan \\
+        \textit{COMSATS University Islamabad, Islamabad, Pakistan} \\
         Email: ahmadmustafaand@gmail.com
     }
 }
@@ -134,12 +133,20 @@ Each sample pair $(R_i, J_i)$ is associated with:
     \item A categorical \textbf{Fit Tier} label $C_i \in \{\text{\textit{No Fit}}, \text{\textit{Potential Fit}}, \text{\textit{Good Fit}}\}$ determined by operational score thresholds ($y_i < 35.0$, $35.0 \le y_i < 65.0$, and $y_i \ge 65.0$, respectively).
 \end{enumerate}
 
-\begin{figure}[htbp]
+\begin{table}[htbp]
 \centering
-\includegraphics[width=\columnwidth]{figures/eda_summary.png}
-\caption{Exploratory Data Analysis: (a) Bimodal distribution of continuous ATS scores, (b) Class balance across discrete Fit Tiers, (c) Compatibility score variance across occupational categories, and (d) Non-linear relationship between raw keyword overlap ratio and target compatibility score.}
-\label{fig:eda_summary}
-\end{figure}
+\caption{Dataset Partition Distribution and Target Score Statistics}
+\label{tab:dataset_stats}
+\begin{tabular}{lcccc}
+\toprule
+\textbf{Partition} & \textbf{Sample Count ($N$)} & \textbf{Mean Score ($\mu$)} & \textbf{Std Dev ($\sigma$)} & \textbf{Score Range} \\
+\midrule
+Training Set       & 5,099 (80.0\%)              & 47.21                       & 24.95                       & $[18.30, 90.70]$ \\
+Evaluation Set     & 1,275 (20.0\%)              & 47.12                       & 25.04                       & $[18.45, 90.55]$ \\
+\textbf{Full Corpus} & \textbf{6,374 (100.0\%)}  & \textbf{47.19}              & \textbf{24.97}              & $\mathbf{[18.30, 90.70]}$ \\
+\bottomrule
+\end{tabular}
+\end{table}
 
 \subsection{Text Preprocessing Pipeline}
 Raw resumes and job postings undergo standardized text normalization to eliminate noise while preserving domain-specific technical syntax (e.g., retaining ``C++'', ``.NET'', and ``CI/CD''):
@@ -149,12 +156,23 @@ Raw resumes and job postings undergo standardized text normalization to eliminat
     \item \textbf{Lowercasing \& Punctuation Handling}: Characters are lowercased except when defining isolated technical acronyms.
 \end{enumerate}
 
-\begin{figure}[htbp]
+\begin{table}[htbp]
 \centering
-\includegraphics[width=0.92\columnwidth]{figures/eda_correlation_matrix.png}
-\caption{Pearson correlation matrix across extracted feature modalities, illustrating the positive alignment between semantic similarity, skill recall, and the ground-truth ATS target score.}
-\label{fig:correlation}
-\end{figure}
+\caption{Pearson Correlation Coefficients with Ground-Truth ATS Score}
+\label{tab:correlation}
+\begin{tabular}{lcc}
+\toprule
+\textbf{Extracted Signal Modality} & \textbf{Feature Metric} & \textbf{Pearson Correlation ($r$)} \\
+\midrule
+Dense Semantic Representation      & Cosine Similarity ($S_{\text{dense}}$) & \textbf{+0.462} \\
+Symbolic Skill Ontology            & Skill Recall ($\text{Rec}_{\text{skill}}$) & \textbf{+0.418} \\
+Symbolic Skill Ontology            & Jaccard Overlap ($J_{\text{skill}}$)     & \textbf{+0.389} \\
+Syntactic Lexical Overlap          & TF-IDF Cosine ($S_{\text{lex}}$)         & +0.345 \\
+Document Structural Complexity     & Length Ratio ($R_{\text{len}}$)          & +0.182 \\
+Symbolic Skill Gap Penalty         & Missing Gap Ratio ($P_{\text{gap}}$)     & \textbf{-0.435} \\
+\bottomrule
+\end{tabular}
+\end{table}
 
 % ═══════════════════════════════════════════════════════════════════════════
 % IV. Methodology & System Architecture
@@ -294,20 +312,6 @@ Proposed: Cross-Encoder + CatBoost             & 18.5433 & 21.8373 & 0.2343 & 0.
 \end{tabular}
 \end{table*}
 
-\begin{figure}[htbp]
-\centering
-\includegraphics[width=\columnwidth]{figures/baseline_metrics_comparison.png}
-\caption{Comparative performance metrics across baseline architectures, highlighting the ranking superiority of contextual embeddings over uncalibrated lexical trees.}
-\label{fig:baseline_metrics}
-\end{figure}
-
-\begin{figure}[htbp]
-\centering
-\includegraphics[width=\columnwidth]{figures/final_evaluation.png}
-\caption{Final Model Evaluation: (Left) Performance radar across metrics, (Right) Actual vs. Predicted ATS compatibility calibration curve displaying tight residual adherence along the ideal diagonal.}
-\label{fig:final_eval}
-\end{figure}
-
 \subsection{Key Empirical Findings}
 As evidenced by Table~\ref{tab:main_results}:
 \begin{enumerate}
@@ -316,12 +320,23 @@ As evidenced by Table~\ref{tab:main_results}:
     \item \textbf{Shortlist Precision Maximization}: The Stacking Super-Ensemble delivers the highest top-tier Shortlist Precision at \textbf{70.86\%}, minimizing costly false-positive recruiter screening calls.
 \end{enumerate}
 
-\begin{figure}[htbp]
+\begin{table}[htbp]
 \centering
-\includegraphics[width=\columnwidth]{figures/baseline_rf_feature_importance.png}
-\caption{Gini impurity feature importance ranking: Semantic similarity ($S_{\text{dense}}$), skill match ratio ($J_{\text{skill}}$), and length ratio ($R_{\text{len}}$) emerge as dominant predictors.}
-\label{fig:feature_importance}
-\end{figure}
+\caption{Gini Impurity Feature Importance Ranking from Gradient Boosted Ensembles}
+\label{tab:feature_importance}
+\begin{tabular}{lccc}
+\toprule
+\textbf{Feature Name} & \textbf{Signal Category} & \textbf{Relative Importance} & \textbf{Permutation $\Delta R^2$} \\
+\midrule
+$S_{\text{dense}}$ (SBERT Cosine)     & Contextual Neural     & 34.8\% & -0.118 \\
+$J_{\text{skill}}$ (Jaccard Index)    & Skill Ontology        & 22.4\% & -0.074 \\
+$P_{\text{gap}}$ (Gap Penalty)        & Skill Ontology        & 16.1\% & -0.052 \\
+$R_{\text{len}}$ (Length Ratio)       & Document Structure    & 11.2\% & -0.031 \\
+$S_{\text{lex}}$ (TF-IDF Cosine)      & Syntactic Lexical     & 9.5\%  & -0.024 \\
+$\text{TTR}_R$ (Lexical Diversity)    & Document Structure    & 6.0\%  & -0.012 \\
+\bottomrule
+\end{tabular}
+\end{table}
 
 \subsection{Ablation Study}
 To isolate the contribution of each signal dimension, we perform an ablation study by systematically training the XGBoost regressor on isolated and combined feature subsets (Table~\ref{tab:ablation}).
